@@ -13,83 +13,86 @@
         android:text="From miner selected above"
         android:textColor="#4D000000"
         android:textSize="16sp"
-        app:layout_constraintBaseline_toBaselineOf="@+id/button2"
+        app:layout_constraintBaseline_toBaselineOf="@+id/fetchButton"
         app:layout_constraintEnd_toEndOf="@+id/scrollView2" />
 
     <TextView
         android:id="@+id/textView4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="toward miner selected above"
+        android:text="To miner selected above"
         android:textColor="#4D000000"
         android:textSize="16sp"
-        app:layout_constraintBaseline_toBaselineOf="@+id/button3"
-        app:layout_constraintEnd_toEndOf="@+id/editTextTextPersonName" />
+        app:layout_constraintBaseline_toBaselineOf="@+id/sendButton"
+        app:layout_constraintEnd_toEndOf="@+id/inputMsg" />
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/listButton"
+        android:onClick="fetchMinerList"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="Fetch Miner List"
-        app:layout_constraintStart_toStartOf="@+id/button4"
+        app:layout_constraintStart_toStartOf="@+id/reseedButton"
         app:layout_constraintTop_toBottomOf="@+id/textView6" />
 
     <Button
-        android:id="@+id/button2"
+        android:id="@+id/fetchButton"
+        android:onClick="fetchChain"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="Fetch Chain"
-        app:layout_constraintStart_toStartOf="@+id/button4"
-        app:layout_constraintTop_toBottomOf="@+id/scrollView3" />
+        app:layout_constraintStart_toStartOf="@+id/reseedButton"
+        app:layout_constraintTop_toBottomOf="@+id/inputMsg" />
 
     <Button
-        android:id="@+id/button3"
+        android:id="@+id/sendButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:onClick="sendMsg"
         android:text="Send Msg"
-        app:layout_constraintEnd_toEndOf="@+id/button2"
+        app:layout_constraintEnd_toEndOf="@+id/fetchButton"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="@+id/button4"
-        app:layout_constraintTop_toBottomOf="@+id/scrollView2" />
+        app:layout_constraintStart_toStartOf="@+id/reseedButton"
+        app:layout_constraintTop_toBottomOf="@+id/scrollView3" />
 
     <Button
-        android:id="@+id/button4"
-        android:onClick="flush"
-        android:layout_width="350dp"
+        android:id="@+id/reseedButton"
+        android:layout_width="360dp"
         android:layout_height="52dp"
         android:layout_marginTop="16dp"
+        android:onClick="flush"
         android:text="Reseed the Network"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/divider2" />
 
     <EditText
-        android:id="@+id/editTextTextPersonName"
+        android:id="@+id/inputMsg"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:ems="10"
+        android:hint="input any msg here ..."
         android:inputType="textPersonName"
-        android:text="input any msg here ..."
         android:textAlignment="center"
-        android:textColor="#4D000000"
-        app:layout_constraintEnd_toEndOf="@+id/button4"
+        android:textColor="#000000"
+        app:layout_constraintEnd_toEndOf="@+id/reseedButton"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="@+id/button3"
-        app:layout_constraintTop_toBottomOf="@+id/button3" />
+        app:layout_constraintStart_toStartOf="@+id/sendButton"
+        app:layout_constraintTop_toBottomOf="@+id/sendButton" />
 
     <ScrollView
         android:id="@+id/scrollView2"
         android:layout_width="0dp"
         android:layout_height="150dp"
         android:layout_marginTop="16dp"
-        app:layout_constraintEnd_toEndOf="@+id/button4"
+        app:layout_constraintEnd_toEndOf="@+id/reseedButton"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="@+id/button2"
-        app:layout_constraintTop_toBottomOf="@+id/button2">
+        app:layout_constraintStart_toStartOf="@+id/fetchButton"
+        app:layout_constraintTop_toBottomOf="@+id/fetchButton">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -107,10 +110,10 @@
         android:layout_width="0dp"
         android:layout_height="100dp"
         android:layout_marginTop="16dp"
-        app:layout_constraintEnd_toEndOf="@+id/button4"
+        app:layout_constraintEnd_toEndOf="@+id/reseedButton"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="@+id/button"
-        app:layout_constraintTop_toBottomOf="@+id/button">
+        app:layout_constraintStart_toStartOf="@+id/listButton"
+        app:layout_constraintTop_toBottomOf="@+id/listButton">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -130,7 +133,7 @@
         android:text="From 10.0.2.2:5000"
         android:textColor="#4D000000"
         android:textSize="16sp"
-        app:layout_constraintBaseline_toBaselineOf="@+id/button"
+        app:layout_constraintBaseline_toBaselineOf="@+id/listButton"
         app:layout_constraintEnd_toEndOf="@+id/scrollView3" />
 
     <View
@@ -141,7 +144,7 @@
         android:background="?android:attr/listDivider"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editTextTextPersonName" />
+        app:layout_constraintTop_toBottomOf="@+id/scrollView2" />
 
     <TextView
         android:id="@+id/textView6"
@@ -151,7 +154,7 @@
         android:text="DecentSpec Android Client"
         android:textSize="16sp"
         android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="@+id/button4"
+        app:layout_constraintStart_toStartOf="@+id/reseedButton"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView

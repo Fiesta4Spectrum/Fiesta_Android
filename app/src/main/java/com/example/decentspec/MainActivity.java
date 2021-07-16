@@ -3,6 +3,7 @@ package com.example.decentspec;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        TextView deviceId = findViewById(R.id.deviceId);
+        final TextView deviceId = findViewById(R.id.deviceId);
         deviceId.setText("ID:" + myName);
         // display name
     }
@@ -40,17 +41,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void sendMsg(View view) {
-        // send user cmd to the selected miner
+        final EditText inputMsg = findViewById(R.id.inputMsg);
+        String msg = inputMsg.getText().toString();
+        if (msg.length() == 0) {
+            showMsg("Empty Msg!");
+        } else {
+            showMsg("Gonna send msg: " + msg);
+            inputMsg.setText("");
+        }
     }
 
     public void flush(View view) {
-        RequestQueue queue = Volley.newRequestQueue(this);
+        RequestQueue HTTPQueue = Volley.newRequestQueue(this);
         StringRequest stringRequest = new StringRequest(Request.Method.GET, SEED_NODE + "/new_seed",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         // Display the first 500 characters of the response string.
-                        showMsg("Response is: "+ response.substring(0,500));
+                        showMsg("Reseed Succeed!");
                     }
                 },
                 new Response.ErrorListener() {
@@ -63,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
                         }
             }
         });
-        queue.add(stringRequest);
+        HTTPQueue.add(stringRequest);
     }
 
     private void showMsg(String msg) {
