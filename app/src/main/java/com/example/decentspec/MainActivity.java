@@ -18,7 +18,7 @@ import com.android.volley.toolbox.Volley;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String SEED_NODE = "http://10.0.0.2:5000";
+    private static final String SEED_NODE = "http://10.0.2.2:5000";
     private final String myName = myUtil.genName(10);
 
     @Override
@@ -28,7 +28,6 @@ public class MainActivity extends AppCompatActivity {
 
         TextView deviceId = findViewById(R.id.deviceId);
         deviceId.setText("ID:" + myName);
-        showMsg("hello !");
         // display name
     }
 
@@ -46,8 +45,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void flush(View view) {
         RequestQueue queue = Volley.newRequestQueue(this);
-//        final StringBuilder retMsg = new StringBuilder(128);
-
         StringRequest stringRequest = new StringRequest(Request.Method.GET, SEED_NODE + "/new_seed",
                 new Response.Listener<String>() {
                     @Override
@@ -62,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
                         if (error.getClass().equals(TimeoutError.class)) {
                             showMsg("Timeout!");
                         } else {
-                            showMsg("That didn't work!");
+                            showMsg(error.toString());
                         }
             }
         });
