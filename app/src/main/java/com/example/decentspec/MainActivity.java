@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String SEED_NODE = "http://10.0.2.2:5000";
     private static final String GET_MINER_API = "/miner_peers";
     private static final String RESEED_API = "/new_seed";
-    private static final String GET_CHAIN_API = "/chain";
+    private static final String GET_CHAIN_API = "/chain_print";
     private static final String SEND_TX_API = "/new_transaction";
 
     private final String myName = myUtil.genName(10);
@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
                             showMsg("MinerList Received!");
                         } catch (JSONException e) {
                             e.printStackTrace();
-                            showMsg("bad respond");
+                            showMsg("Bad respond");
                         }
                         if (minerListArray.size() == 0) {
                             minerListArray.add("Press \"FETCH MINER LIST\" to get miner list.");
@@ -101,11 +101,7 @@ public class MainActivity extends AppCompatActivity {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        if (error.getClass().equals(TimeoutError.class)) {
-                            showMsg("Timeout!");
-                        } else {
-                            showMsg(error.toString());
-                        }
+                        showMsg(error.toString());
                         minerListArray.add("Press \"FETCH MINER LIST\" to get miner list.");
                         haveMiner = false;
                         minerAdapter.notifyDataSetChanged();
@@ -120,6 +116,49 @@ public class MainActivity extends AppCompatActivity {
             showMsg("Please select a valid miner first!");
             return;
         }
+        String url = minerListArray.get(minerAdapter.getSelect()) + GET_CHAIN_API;
+        RequestQueue HTTPQueue = Volley.newRequestQueue(this);
+
+        blockListArray.clear();
+        blockAdapter.rstSelect();
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            JSONObject jsonRsp = new JSONObject(response);
+                            JSONArray chain = jsonRsp.getJSONArray("chain");
+                            for (int i=0; i < chain.length(); i++) {
+                                JSONObject block = chain.getJSONObject(i);
+                                JSONArray txs = block.getJSONArray("transactions");
+                                for (int j=0; j<txs.length(); j++) {
+                                    JSONObject tx = txs.getJSONObject(j);
+                                    blockListArray.add(0, "[B" + block.getString("index") + "] " +
+                                                        "[" + tx.getString("author") + "] " + tx.getString("content"));
+                                }
+                            }
+                            if (blockListArray.size() == 0) {
+                                blockListArray.add("It is an empty chain.");
+                                blockListArray.add("Press \"FETCH CHAIN\" to get the latest chain.");
+                            }
+                            showMsg("Chain Received!");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            showMsg("Fails to parser respond!");
+                            blockListArray.add("Press \"FETCH CHAIN\" to get the latest chain.");
+                        }
+                        blockAdapter.notifyDataSetChanged();
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        showMsg(error.toString());
+                        blockListArray.add("Press \"FETCH CHAIN\" to get the latest chain.");
+                        blockAdapter.notifyDataSetChanged();
+                    }
+                });
+        HTTPQueue.add(stringRequest);
     }
 
     public void sendMsg(View view) throws JSONException {
@@ -173,6 +212,7 @@ public class MainActivity extends AppCompatActivity {
             };
 
             HTTPQueue.add(stringRequest);
+            inputMsg.setText("");
         }
     }
 
