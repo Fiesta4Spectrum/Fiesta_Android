@@ -20,15 +20,18 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity
-                          implements MyRecyclerViewAdapter.ItemClickListener {
+public class MainActivity extends AppCompatActivity {
 
     private static final String SEED_NODE = "http://10.0.2.2:5000";
     private final String myName = myUtil.genName(10);
-    private MyRecyclerViewAdapter adapter;
-    private int currentMiner = -1;
+    private MyRecyclerViewAdapter minerAdapter, blockAdapter;
+    private boolean haveMiner = false;
     private ArrayList<String> blockListArray = new ArrayList<>();
     private ArrayList<String> minerListArray = new ArrayList<>();
 
@@ -42,36 +45,71 @@ public class MainActivity extends AppCompatActivity
         deviceId.setText("ID:" + myName);
 
         // display miner list
-        minerListArray.add("Press \"FETCH MINER LIST\" to get miner list ... ");
+        minerListArray.add("Press \"FETCH MINER LIST\" to get miner list.");
         RecyclerView minerList = findViewById(R.id.minerList);
         minerList.setLayoutManager(new LinearLayoutManager(this));
         minerList.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
-        adapter = new MyRecyclerViewAdapter(this, minerListArray);
-        adapter.setClickListener(this);
-        minerList.setAdapter(adapter);
+        minerAdapter = new MyRecyclerViewAdapter(this, minerListArray);
+        minerList.setAdapter(minerAdapter);
         // display the chain
-        blockListArray.add("Press \"FETCH CHAIN\" to get the latest chain ... ");
+        blockListArray.add("Press \"FETCH CHAIN\" to get the latest chain.");
         RecyclerView blockList = findViewById(R.id.blockList);
         blockList.setLayoutManager(new LinearLayoutManager(this));
         blockList.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
-        adapter = new MyRecyclerViewAdapter(this, blockListArray);
-        blockList.setAdapter(adapter);
-    }
+        blockAdapter = new MyRecyclerViewAdapter(this, blockListArray);
+        blockList.setAdapter(blockAdapter);
 
-    @Override
-    public void onItemClick(View view, int position) {
-        showMsg("you click" + adapter.getItem(position) + " on row number " + position);
-//        currentMiner = position;
     }
 
     public void fetchMinerList(View view) {
-        // fetchMinerList from 10.0.0.2:5000
+        RequestQueue HTTPQueue = Volley.newRequestQueue(this);
+        minerListArray.clear();
+        minerAdapter.rstSelect();
+        haveMiner = false;
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, SEED_NODE + "/miner_peers",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            JSONObject jsonRsp = new JSONObject(response);
+                            JSONArray peers = jsonRsp.getJSONArray("peers");
+                            for (int i=0; i < peers.length(); i++) {
+                                minerListArray.add(myUtil.transAddr(peers.getString(i)));
+                            }
+                            showMsg("MinerList Received!");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            showMsg("bad respond");
+                        }
+                        if (minerListArray.size() == 0) {
+                            minerListArray.add("Press \"FETCH MINER LIST\" to get miner list.");
+                            haveMiner = false;
+                        } else {
+                            haveMiner = true;
+                        }
+                        minerAdapter.notifyDataSetChanged();
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        if (error.getClass().equals(TimeoutError.class)) {
+                            showMsg("Timeout!");
+                        } else {
+                            showMsg(error.toString());
+                        }
+                        minerListArray.add("Press \"FETCH MINER LIST\" to get miner list.");
+                        haveMiner = false;
+                        minerAdapter.notifyDataSetChanged();
+                    }
+                });
+        HTTPQueue.add(stringRequest);
     }
 
     public void fetchChain(View view) {
         // fetchChainList from the selected miner
-        if (currentMiner < 0) {
-            showMsg("Please select miner first!");
+        if (minerAdapter.getSelect() < 0 || !haveMiner) {
+            showMsg("Please select a valid miner first!");
             return;
         }
     }
@@ -79,14 +117,15 @@ public class MainActivity extends AppCompatActivity
     public void sendMsg(View view) {
         final EditText inputMsg = findViewById(R.id.inputMsg);
         String msg = inputMsg.getText().toString();
-        if (currentMiner < 0) {
-            showMsg("Please select miner first!");
+        if (minerAdapter.getSelect() < 0 || !haveMiner) {
+            showMsg("Please select a valid miner first!");
             return;
         }
         if (msg.length() == 0) {
             showMsg("Empty Msg!");
         } else {
             showMsg("Gonna send msg: " + msg);
+            String url = minerListArray.get(minerAdapter.getSelect()) + "/new_transaction";
             inputMsg.setText("");
         }
     }
@@ -97,7 +136,6 @@ public class MainActivity extends AppCompatActivity
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
                         showMsg("Reseed Succeed!");
                     }
                 },

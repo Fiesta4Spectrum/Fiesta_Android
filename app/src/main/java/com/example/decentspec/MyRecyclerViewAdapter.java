@@ -15,12 +15,19 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
 
     private List<String> mData;
     private LayoutInflater mInflater;
-    private ItemClickListener mClickListener;
+    private int selectedPos = RecyclerView.NO_POSITION; // for select highlight
 
     // data is passed into the constructor
     MyRecyclerViewAdapter(Context context, List<String> data) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
+    }
+
+    public void rstSelect() {
+        selectedPos = RecyclerView.NO_POSITION;
+    }
+    public int getSelect() {
+        return selectedPos;
     }
 
     // inflates the row layout from xml when needed
@@ -33,8 +40,9 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
     // binds the data to the TextView in each row
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        String animal = mData.get(position);
-        holder.myTextView.setText(animal);
+        String content = mData.get(position);
+        holder.myTextView.setText(content);
+        holder.itemView.setSelected(selectedPos == position); // for select highlight
     }
 
     // total number of rows
@@ -42,7 +50,6 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
     public int getItemCount() {
         return mData.size();
     }
-
 
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -56,7 +63,14 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
 
         @Override
         public void onClick(View view) {
-            if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
+            notifyItemChanged(selectedPos);
+            int next = getAdapterPosition();
+            if (selectedPos == next) {
+                selectedPos = RecyclerView.NO_POSITION;
+            } else {
+                selectedPos = next;
+            }
+            notifyItemChanged(selectedPos); // for select highlight
         }
     }
 
@@ -65,13 +79,4 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
         return mData.get(id);
     }
 
-    // allows clicks events to be caught
-    void setClickListener(ItemClickListener itemClickListener) {
-        this.mClickListener = itemClickListener;
-    }
-
-    // parent activity will implement this method to respond to click events
-    public interface ItemClickListener {
-        void onItemClick(View view, int position);
-    }
 }
