@@ -24,4 +24,11 @@ public class myUtil {
         }
         return old;
     }
+
+//    public static String genTimestamp(){
+//        return String.format("%.6f", System.currentTimeMillis() / 1000.0);
+//    }
+    public static double genTimestamp(){
+        return System.currentTimeMillis() / 1000.0;
+    }
 }
