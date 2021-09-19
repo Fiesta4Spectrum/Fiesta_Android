@@ -6,6 +6,17 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <TextView
+        android:id="@+id/device_id2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0.00"
+        android:textAlignment="viewEnd"
+        android:textSize="12sp"
+        android:textStyle="italic"
+        app:layout_constraintBaseline_toBaselineOf="@+id/textView"
+        app:layout_constraintEnd_toEndOf="@+id/textView19" />
+
     <Switch
         android:id="@+id/FL_switch"
         android:layout_width="0dp"
@@ -133,7 +144,7 @@
         app:layout_constraintTop_toBottomOf="@+id/serial_switch" />
 
     <RadioGroup
-        android:id="@+id/radioGroup"
+        android:id="@+id/serialStateGroup"
         android:layout_width="370dp"
         android:layout_height="34dp"
         android:layout_marginEnd="6dp"
@@ -232,12 +243,13 @@
         app:layout_constraintTop_toBottomOf="@+id/textView16" />
 
     <RadioGroup
+        android:id="@+id/FLStateGroup"
         android:layout_width="300dp"
         android:layout_height="33dp"
         android:layout_marginTop="2dp"
         android:checkedButton="@+id/RB_ML_idle"
         android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="@+id/radioGroup"
+        app:layout_constraintEnd_toEndOf="@+id/serialStateGroup"
         app:layout_constraintTop_toBottomOf="@+id/textView16">
 
         <RadioButton
@@ -303,12 +315,13 @@
         android:id="@+id/device_id"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="28dp"
         android:text="Not Yet Generated"
         android:textAlignment="viewEnd"
         android:textSize="12sp"
         android:textStyle="italic"
         app:layout_constraintBaseline_toBaselineOf="@+id/textView16"
-        app:layout_constraintEnd_toEndOf="@+id/textView18" />
+        app:layout_constraintStart_toEndOf="@+id/textView16" />
 
     <ScrollView
         android:id="@+id/ScrollView_Dataset"
@@ -390,6 +403,16 @@
         android:scaleType="fitXY"
         app:layout_constraintBottom_toBottomOf="@+id/textView8"
         app:layout_constraintEnd_toEndOf="@+id/help_board" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="28dp"
+        android:text="Reward Earned"
+        android:textColor="#000000"
+        app:layout_constraintBaseline_toBaselineOf="@+id/textView16"
+        app:layout_constraintEnd_toStartOf="@+id/device_id2" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

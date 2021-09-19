@@ -1,34 +1,20 @@
 package com.example.decentspec_v3;
 
-import androidx.annotation.IntRange;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
+import android.widget.RadioGroup;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.hoho.android.usbserial.driver.UsbSerialDriver;
-import com.hoho.android.usbserial.driver.UsbSerialPort;
-import com.hoho.android.usbserial.driver.UsbSerialProber;
-
-import java.io.IOException;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -38,15 +24,17 @@ public class MainActivity extends AppCompatActivity {
     private String TAG = "MainActivity";
     private String STOP_ACTION = "STOP";
     private String START_ACTION = "START";
-    private String ID_INTENT_FILTER = "device id update";
+    private String ID_INTENT_FILTER = "device.id.update";
     private String ID_UPDATE_FIELD = "new_id";
+    private String SERIAL_SERVICE_FILTER = "service.serial";
+    private String FL_SERVICE_FILTER = "service.fl";
+    private String STATE_FIELD = "state";
 
     // UI component
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private Switch serial_switch;
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private Switch FL_switch;
-    private TextView device_id_text;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
         serial_switch.setChecked(ifMyServiceRunning(SerialListener.class));
         FL_switch.setChecked(ifMyServiceRunning(FLManager.class));
 
-        device_id_text = findViewById(R.id.device_id);
 
         // update states value from service
         // device id update
@@ -68,9 +55,28 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onReceive(Context context, Intent intent) {
                         String new_id = intent.getStringExtra(ID_UPDATE_FIELD);
+                        TextView device_id_text = findViewById(R.id.device_id);
                         device_id_text.setText(new_id);
                     }
                 }, new IntentFilter(ID_INTENT_FILTER)
+        );
+        // serial service update
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        int state = intent.getIntExtra(STATE_FIELD, 0);
+                        int radioId = findViewById(R.id.RB_board_disc).getId();
+                        switch (state) {
+                            case 0: radioId = findViewById(R.id.RB_board_disc).getId(); break;
+                            case 1: radioId = findViewById(R.id.RB_board_hand).getId(); break;
+                            case 2: radioId = findViewById(R.id.RB_board_sample).getId(); break;
+                            case 3: radioId = findViewById(R.id.RB_board_idle).getId(); break;
+                        }
+                        RadioGroup serialRadio = findViewById(R.id.serialStateGroup);
+                        serialRadio.check(radioId);
+                    }
+                }, new IntentFilter(SERIAL_SERVICE_FILTER)
         );
     }
 
@@ -83,14 +89,9 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             /*start foreground service*/
-            if (touchUSB() && touchLocation()) {
-                myToast("USD device detected");
-                Intent runMyService = new Intent(this, SerialListener.class);
-                runMyService.setAction(START_ACTION);
-                startForegroundService(runMyService);
-            } else {
-                myToast("no available USB device");
-            }
+            Intent runMyService = new Intent(this, SerialListener.class);
+            runMyService.setAction(START_ACTION);
+            startForegroundService(runMyService);
             serial_switch.setChecked(ifMyServiceRunning(SerialListener.class));
         } else {
             // turn-off service request
@@ -111,13 +112,9 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             /*start foreground service*/
-            if (touchNetwork()) {
-                Intent runMyService = new Intent(this, FLManager.class);
-                runMyService.setAction(START_ACTION);
-                startForegroundService(runMyService);
-            } else {
-                myToast("Internet unavailable");
-            }
+            Intent runMyService = new Intent(this, FLManager.class);
+            runMyService.setAction(START_ACTION);
+            startForegroundService(runMyService);
             FL_switch.setChecked(ifMyServiceRunning(FLManager.class));
         } else {
             // turn-off service request
@@ -129,44 +126,6 @@ public class MainActivity extends AppCompatActivity {
             stopMyService.setAction(STOP_ACTION);
             startService(stopMyService);
         }
-    }
-
-    // touch methods to make sure the permission
-    private boolean touchUSB() {
-        // try to open the USB from this activity
-        // to make sure the service can visit usb device
-        // Find all available drivers from attached devices.
-        UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
-        List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
-        if (availableDrivers.isEmpty()) {
-            Log.d(TAG, "no avail USB drivers");
-            return false;
-        }
-
-        // Open a connection to the first available driver.
-        // default only one device connect to OTG plug (no one will use a usb hub on mobile ... i guess)
-        UsbSerialDriver driver = availableDrivers.get(0);
-        UsbDeviceConnection connection = manager.openDevice(driver.getDevice());
-        if (connection == null) {
-            Log.d(TAG, "no USB permission");
-            PendingIntent mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent("android.intent.USB_PERMISSION"), 0);
-            manager.requestPermission(driver.getDevice(), mPermissionIntent);
-            connection = manager.openDevice(driver.getDevice());
-        }
-        if (connection == null)
-            return false;
-        else return true;
-        // we simply touch and do not transmission so no need to open the port
-//        UsbSerialPort port = driver.getPorts().get(1); // Most devices have just one port (port 0), damn, DIGILENT has 2!!!!!
-//        port.open(connection);
-//        port.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
-//        port.close();
-    }
-    private boolean touchNetwork() {
-        return true; // actually the manager did not need network
-    }
-    private boolean touchLocation() {
-        return true; // actually the location is already granted at installation
     }
 
     // utility methods
