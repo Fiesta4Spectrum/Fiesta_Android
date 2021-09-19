@@ -12,4 +12,7 @@ public class MyUtils {
             sb.append(AB.charAt(rnd.nextInt(AB.length())));
         return sb.toString();
     }
+    public static long genTimestamp(){
+        return System.currentTimeMillis() / 1000;
+    }
 }
