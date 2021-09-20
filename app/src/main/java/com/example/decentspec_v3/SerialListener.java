@@ -200,7 +200,7 @@ public class SerialListener extends Service {
         private int myState = 0;
 
         public OneTimeSample(UsbDevice device) {
-            appToast("start one sample");
+//            appToast("start one sample");
             myDevice = device;
             myPort = setupUsbPort(0,1);
             if (myPort == null) {
@@ -305,7 +305,7 @@ public class SerialListener extends Service {
             }
             notifyState(IDLE);
             myState = IDLE;
-            appToast("sample is finished");
+//            appToast("sample is finished");
         }
     }
 

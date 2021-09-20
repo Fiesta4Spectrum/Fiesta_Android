@@ -3,11 +3,14 @@ package com.example.decentspec_v3.database;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.lifecycle.LiveData;
+
 import java.util.List;
 
 // singleton design
 public class FileDatabaseMgr {
 
+    private static final String TAG = "Database";
     private FileDatabase db = null;
     private SampleFileDao dao = null;
 
@@ -18,11 +21,16 @@ public class FileDatabaseMgr {
 
     // public API
     public List<SampleFile> getFileList() {
-        return dao.getAllFiles();
+        return dao.getAllFiles();                       // not actually used, it might be blocked
     }
+
+    public LiveData<List<SampleFile>> getLiveList() {   // live list to enable view update
+        return dao.getLiveList();
+    }
+
     public SampleFile createEntry(String fileName) {
         SampleFile newSampleFile = new SampleFile(fileName);
-        Log.d("dbop", "will add the entry: " + newSampleFile.toString());
+        Log.d(TAG, "insert: " + newSampleFile.toString());
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -31,9 +39,10 @@ public class FileDatabaseMgr {
         }).start();
         return newSampleFile;
     }
+
     public void markStage(SampleFile file, int stage) {
         file.stage = stage;
-        Log.d("dbop", "will change the entry: " + file.toString());
+        Log.d(TAG, "update: " + file.toString());
         new Thread(new Runnable() {
             @Override
             public void run() {

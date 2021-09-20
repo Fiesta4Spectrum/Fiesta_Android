@@ -1,12 +1,19 @@
 package com.example.decentspec_v3;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
@@ -15,6 +22,11 @@ import android.widget.RadioGroup;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.decentspec_v3.database.DBViewModel;
+import com.example.decentspec_v3.database.SampleFile;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -36,6 +48,11 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private Switch FL_switch;
 
+    // live data source
+    private DBViewModel mDBViewModel;
+    private RecyclerView myDBRV;
+    private RecyclerViewAdapter myDBRVAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,7 +64,17 @@ public class MainActivity extends AppCompatActivity {
         serial_switch.setChecked(ifMyServiceRunning(SerialListener.class));
         FL_switch.setChecked(ifMyServiceRunning(FLManager.class));
 
-
+        myDBRV = findViewById(R.id.rv_database);
+        mDBViewModel = new ViewModelProvider(this).get(DBViewModel.class);
+        Activity activityContext = this;
+        mDBViewModel.pull().observe(this, new Observer<List<SampleFile>>() {
+            @Override
+            public void onChanged(List<SampleFile> sampleFiles) {
+                myDBRVAdapter = new RecyclerViewAdapter(activityContext, sampleFiles);
+                myDBRV.setLayoutManager(new LinearLayoutManager(activityContext));
+                myDBRV.setAdapter(myDBRVAdapter);
+            }
+        });
         // update states value from service
         // device id update
         LocalBroadcastManager.getInstance(this).registerReceiver(
@@ -127,6 +154,26 @@ public class MainActivity extends AppCompatActivity {
             startService(stopMyService);
         }
     }
+    // help actions
+    public void onPressHelpSerial(View view) {
+        showDialog("A compatible spectrum sensing board is expected to connect to this device, with which data used to fuel local training will be gathered.\nThe Serial Listener will stay in background and package each sampling into files.");
+    }
+    public void onPressHelpFL(View view) {
+        showDialog("Local training starts only when the device is connected to WiFi network with power cable plugged, considering its bandwidth and power consuming.\nAfter that, the trained local model will be upload to miner network.");
+    }
+    public void onPressHelpData(View view) {
+        showDialog("You could view records of your local sampled datasets here.\n\"Receiving\" means it is under transmission through the USB cable.\n\"Training\" means it is under local training");
+    }
+    private void showDialog(String content) {
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setMessage(content)
+                .setPositiveButton("ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                }).show();
+    }
+
 
     // utility methods
     @SuppressWarnings("deprecation")

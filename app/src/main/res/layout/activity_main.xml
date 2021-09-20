@@ -323,8 +323,8 @@
         app:layout_constraintBaseline_toBaselineOf="@+id/textView16"
         app:layout_constraintStart_toEndOf="@+id/textView16" />
 
-    <ScrollView
-        android:id="@+id/ScrollView_Dataset"
+    <LinearLayout
+        android:id="@+id/Broader_dataset"
         android:layout_width="375dp"
         android:layout_height="141dp"
         android:layout_marginStart="16dp"
@@ -335,16 +335,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView11">
 
-        <LinearLayout
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="match_parent"
+            android:padding="2dp">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:layout_width="match_parent"
-                android:layout_height="141dp" />
-        </LinearLayout>
-    </ScrollView>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_database"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        </ScrollView>
+
+    </LinearLayout>
 
     <View
         android:id="@+id/divider5"
@@ -355,7 +358,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ScrollView_Dataset" />
+        app:layout_constraintTop_toBottomOf="@+id/Broader_dataset" />
 
     <TextView
         android:id="@+id/textView21"
@@ -371,7 +374,8 @@
         app:layout_constraintTop_toBottomOf="@+id/divider5" />
 
     <ImageButton
-        android:id="@+id/help_board"
+        android:id="@+id/help_serial"
+        android:onClick="onPressHelpSerial"
         android:layout_width="23dp"
         android:layout_height="23dp"
         android:layout_marginEnd="18dp"
@@ -384,6 +388,7 @@
 
     <ImageButton
         android:id="@+id/help_data"
+        android:onClick="onPressHelpData"
         android:layout_width="23dp"
         android:layout_height="23dp"
         android:alpha="0.8"
@@ -395,6 +400,7 @@
 
     <ImageButton
         android:id="@+id/help_FL"
+        android:onClick="onPressHelpFL"
         android:layout_width="23dp"
         android:layout_height="23dp"
         android:alpha="0.8"
@@ -402,7 +408,7 @@
         android:clickable="true"
         android:scaleType="fitXY"
         app:layout_constraintBottom_toBottomOf="@+id/textView8"
-        app:layout_constraintEnd_toEndOf="@+id/help_board" />
+        app:layout_constraintEnd_toEndOf="@+id/help_serial" />
 
     <TextView
         android:id="@+id/textView"

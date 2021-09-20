@@ -17,13 +17,14 @@ public interface SampleFileDao {
 
     @Query("Select * from SampleFile")
     List<SampleFile> getAllFiles();
+
     @Query("Select * from SampleFile")
     LiveData<List<SampleFile>> getLiveList();
 
     @Insert
     long insert(SampleFile newfile); // return the id of inserted entry
 
-    @Update(onConflict = OnConflictStrategy.REPLACE) // TODO this seems didn't work
+    @Update(onConflict = OnConflictStrategy.REPLACE)
     void update(SampleFile newfile);
 
     @Query("UPDATE SampleFile SET stage = :stage WHERE id = :id")
