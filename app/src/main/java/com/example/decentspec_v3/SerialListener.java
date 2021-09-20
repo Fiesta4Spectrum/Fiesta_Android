@@ -17,15 +17,18 @@ import android.widget.Toast;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.example.decentspec_v3.database.FileDatabaseMgr;
+import com.example.decentspec_v3.database.SampleFile;
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
 import com.hoho.android.usbserial.util.SerialInputOutputManager;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
+
+import static com.example.decentspec_v3.database.SampleFile.STAGE_RECEIVED;
 
 public class SerialListener extends Service {
 
@@ -61,6 +64,7 @@ public class SerialListener extends Service {
 
     // sample related
     private OneTimeSample mSampleInstance = null;
+    private FileDatabaseMgr myDBMgr = null;
 
     // intent related
     private String SERIAL_SERVICE_FILTER = "service.serial";
@@ -68,7 +72,6 @@ public class SerialListener extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
@@ -88,6 +91,7 @@ public class SerialListener extends Service {
             Log.d(TAG, "start the service");
             mNotificationBuilder = genForegroundNotification();
             startForeground(NOTI_ID, mNotificationBuilder.build());
+            myDBMgr = new FileDatabaseMgr(this);
             setupReceiver();
             notifyState(DISC);
             UsbDevice myFirstUSB = touchFirstUSB(); // it will trigger the receiver if asking for permission
@@ -192,6 +196,7 @@ public class SerialListener extends Service {
         private UsbSerialPort myPort;
         private SerialInputOutputManager mySerialIOMgr; // a stand alone runnable monitor the input
         private FileOutputStream myWriteStream = null;
+        private SampleFile mySampleFileEntry = null;
         private int myState = 0;
 
         public OneTimeSample(UsbDevice device) {
@@ -242,6 +247,7 @@ public class SerialListener extends Service {
             try {
                 String filename = "demo_" + MyUtils.genTimestamp() + ".txt";
                 myWriteStream = openFileOutput(filename, Context.MODE_PRIVATE);
+                mySampleFileEntry = myDBMgr.createEntry(filename);
             } catch (IOException e) {
                 Log.d(TAG, "unable to create file");
                 stop();
@@ -283,7 +289,7 @@ public class SerialListener extends Service {
                 mySerialIOMgr.stop();
                 mySerialIOMgr = null;
             }
-            /* save file and update database */
+            /* save file */
             try {
                 if (myWriteStream != null) {
                     myWriteStream.close();
@@ -291,6 +297,11 @@ public class SerialListener extends Service {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+            /* update database */
+            if (mySampleFileEntry != null) {
+                myDBMgr.markStage(mySampleFileEntry, STAGE_RECEIVED);
+                mySampleFileEntry = null;
             }
             notifyState(IDLE);
             myState = IDLE;
