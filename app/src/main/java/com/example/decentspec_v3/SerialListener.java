@@ -1,19 +1,26 @@
 package com.example.decentspec_v3;
 
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -55,14 +62,19 @@ public class SerialListener extends Service {
     private String NOTI_TICKER = "Serial Listener is initiating ...";
     private NotificationCompat.Builder mNotificationBuilder = null;
 
-    // listener related
-    private USBBroadcastReceiver mUSBBroadcastReceiver = null;
-    private USBBroadcastReceiver.USBChangeListener mHandler = null;
-
     // usb related
-    private UsbManager manager = null;
+    private USBBroadcastReceiver mUSBBroadcastReceiver = null;
+    private USBBroadcastReceiver.USBChangeListener mUSBHandler = null;
+    private UsbManager mUSBManager = null;
 
-    // sample related
+    // location related
+    private static final int GPS_UPDATE_INTERVAL = 1000; // 1s update
+    private LocationManager mLocationManager = null;
+    private LocationListener mLocationListener = null;
+    private Location curLocation = null;
+    private final Object curLocationLock = new Object();
+
+    // sample database related
     private OneTimeSample mSampleInstance = null;
     private FileDatabaseMgr myDBMgr = null;
 
@@ -92,7 +104,8 @@ public class SerialListener extends Service {
             mNotificationBuilder = genForegroundNotification();
             startForeground(NOTI_ID, mNotificationBuilder.build());
             myDBMgr = new FileDatabaseMgr(this);
-            setupReceiver();
+            setupUSBReceiver();
+            setupLocationMgr();
             notifyState(DISC);
             UsbDevice myFirstUSB = touchFirstUSB(); // it will trigger the receiver if asking for permission
             if (myFirstUSB != null) { // if we already has the permission
@@ -105,13 +118,54 @@ public class SerialListener extends Service {
         return START_NOT_STICKY;
     }
 
-    private void setupReceiver() {
+    private boolean setupLocationMgr() {
+        mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        List<String> providerList = mLocationManager.getProviders(true);
+        if (!providerList.contains(LocationManager.GPS_PROVIDER)) {
+            appToast("no available location provider");
+            mLocationManager = null;
+            return false;
+        }
+        // we leave setup listener to OneTimeSample to save energy
+        return true;
+    }
+
+    private boolean setupGPSListener(int interval_ms) {
+        if (mLocationManager == null)
+            return false;
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            appToast("no available location permission");
+            return false;
+        }
+        synchronized (curLocationLock) {    // the init value of gps
+            curLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        }
+        mLocationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(@NonNull Location location) {
+                synchronized (curLocationLock) {
+                    curLocation = location;
+                }
+            }
+        };
+        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_ms, 0, mLocationListener);
+        return true;
+    }
+
+    private void cleanGPSListener() {
+        if (mLocationListener != null && mLocationManager != null) {
+            mLocationManager.removeUpdates(mLocationListener);
+            mLocationListener = null;
+        }
+    }
+
+    private void setupUSBReceiver() {
         mUSBBroadcastReceiver = new USBBroadcastReceiver();
-        mHandler = new USBBroadcastReceiver.USBChangeListener() {
+        mUSBHandler = new USBBroadcastReceiver.USBChangeListener() {
             @Override
             public void onUSBStateChange(int state, UsbDevice device) {
                 if (state == USBBroadcastReceiver.USBChangeListener.ACTION_GAINED) {
-                    if (manager.hasPermission(device)) {
+                    if (mUSBManager.hasPermission(device)) {
                         mNotificationBuilder.setContentText(NOTI_TEXT_CONNED);
                         appToast("new device attached");
                         mSampleInstance = new OneTimeSample(device);
@@ -126,7 +180,7 @@ public class SerialListener extends Service {
                     }
                     mNotificationMgr.notify(NOTI_ID, mNotificationBuilder.build());                }
                 if (state == USBBroadcastReceiver.USBChangeListener.ACTION_ATTACHED) {
-                    if (manager.hasPermission(device)) {
+                    if (mUSBManager.hasPermission(device)) {
                        mNotificationBuilder.setContentText(NOTI_TEXT_CONNED);
                        mNotificationMgr.notify(NOTI_ID, mNotificationBuilder.build());
                        mSampleInstance = new OneTimeSample(device);
@@ -149,16 +203,16 @@ public class SerialListener extends Service {
                 }
             }
         };
-        mUSBBroadcastReceiver.registerReceiver(this, mHandler);
+        mUSBBroadcastReceiver.registerReceiver(this, mUSBHandler);
     }
 
     private UsbDevice touchFirstUSB() {
         // try to access the first usb device
 
         // Find 0th driver from attached devices.
-        if (manager == null)
-            manager = (UsbManager) getSystemService(Context.USB_SERVICE);
-        List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
+        if (mUSBManager == null)
+            mUSBManager = (UsbManager) getSystemService(Context.USB_SERVICE);
+        List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(mUSBManager);
         if (availableDrivers.isEmpty())
             return null;
         // default only one device connect to OTG plug (no one will use a usb hub on mobile ... i guess)
@@ -166,11 +220,11 @@ public class SerialListener extends Service {
 
         if (driver == null) return null;    // there is no driver at all
 
-        if (manager.hasPermission(driver.getDevice()))
+        if (mUSBManager.hasPermission(driver.getDevice()))
             return driver.getDevice();  // return driver only if we have permission
 
         PendingIntent mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent("android.intent.USB_PERMISSION"), 0);
-        manager.requestPermission(driver.getDevice(), mPermissionIntent);
+        mUSBManager.requestPermission(driver.getDevice(), mPermissionIntent);
         return null;   // also return null if do not have permission, try to get the permission also
     }
 
@@ -212,16 +266,16 @@ public class SerialListener extends Service {
         }
 
         private UsbSerialPort setupUsbPort(int driverIndex, int portIndex) {
-            if (manager == null) {
-                manager = (UsbManager) getSystemService(Context.USB_SERVICE);
+            if (mUSBManager == null) {
+                mUSBManager = (UsbManager) getSystemService(Context.USB_SERVICE);
             }
-            List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
+            List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(mUSBManager);
             if (availableDrivers.isEmpty()) {
                 Log.d(TAG, "no available USB drivers");
                 return null;
             }
             UsbSerialDriver driver = availableDrivers.get(driverIndex);
-            UsbDeviceConnection connection = manager.openDevice(driver.getDevice());
+            UsbDeviceConnection connection = mUSBManager.openDevice(driver.getDevice());
             if (connection == null) {
                 Log.d(TAG, "no permission to connect");
                 return  null;
@@ -252,7 +306,9 @@ public class SerialListener extends Service {
                 Log.d(TAG, "unable to create file");
                 stop();
             }
-            /* set up IO listener thread*/
+            /* set up GPS listener thread */
+            setupGPSListener(GPS_UPDATE_INTERVAL);
+            /* set up IO listener thread */
             mySerialIOMgr = new SerialInputOutputManager(myPort, this);
             mySerialIOMgr.start();
             notifyState(SAMPLING);
@@ -289,6 +345,8 @@ public class SerialListener extends Service {
                 mySerialIOMgr.stop();
                 mySerialIOMgr = null;
             }
+            /* terminate GPS listener */
+            cleanGPSListener();
             /* save file */
             try {
                 if (myWriteStream != null) {
