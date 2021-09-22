@@ -106,6 +106,17 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }, new IntentFilter(SERIAL_STATE_FILTER)
         );
+
+        // first time app setup
+        GlobalPrefMgr.init(this);
+        TextView device_id = findViewById(R.id.device_id);
+        device_id.setText(GlobalPrefMgr.getName());
+    }
+
+    @Override
+    protected void onDestroy() {
+
+        super.onDestroy();
     }
 
     // switch actions

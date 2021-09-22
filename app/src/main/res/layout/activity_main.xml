@@ -7,7 +7,7 @@
     tools:context=".MainActivity">
 
     <TextView
-        android:id="@+id/device_id2"
+        android:id="@+id/reward_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="0.00"
@@ -306,7 +306,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="12dp"
-        android:text="unknown"
+        android:text="Please grant GPS permission"
         android:textSize="12sp"
         android:textStyle="italic"
         app:layout_constraintBaseline_toBaselineOf="@+id/textView2"
@@ -430,7 +430,7 @@
         android:text="Reward Earned"
         android:textColor="#000000"
         app:layout_constraintBaseline_toBaselineOf="@+id/textView16"
-        app:layout_constraintEnd_toStartOf="@+id/device_id2" />
+        app:layout_constraintEnd_toStartOf="@+id/reward_text" />
 
     <TextView
         android:id="@+id/textView2"

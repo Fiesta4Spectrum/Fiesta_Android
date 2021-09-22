@@ -35,6 +35,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
+import static com.example.decentspec_v3.database.Config.*;
 import static com.example.decentspec_v3.database.SampleFile.STAGE_RECEIVED;
 import static com.example.decentspec_v3.IntentDirectory.*;
 
@@ -67,11 +68,7 @@ public class SerialListener extends Service {
     private UsbManager mUSBManager = null;
 
     // location related
-    private static final int GPS_UPDATE_INTERVAL = 1000; // 1s update
-    private LocationManager mLocationManager = null;
-    private LocationListener mLocationListener = null;
-    private Location curLocation = null;
-    private final Object curLocationLock = new Object();
+    private GPSTracker mGPSTracker = null;
 
     // sample database related
     private OneTimeSample mSampleInstance = null;
@@ -100,7 +97,9 @@ public class SerialListener extends Service {
             startForeground(NOTI_ID, mNotificationBuilder.build());
             myDBMgr = new FileDatabaseMgr(this);
             setupUSBReceiver();
-            setupLocationMgr();
+            mGPSTracker = new GPSTracker(this);
+            if (! mGPSTracker.isAvail())
+                appToast("no available GPS Tracker");
             notifyState(DISC);
             UsbDevice myFirstUSB = touchFirstUSB(); // it will trigger the receiver if asking for permission
             if (myFirstUSB != null) { // if we already has the permission
@@ -111,61 +110,6 @@ public class SerialListener extends Service {
             }
         }
         return START_NOT_STICKY;
-    }
-
-    private boolean setupLocationMgr() {
-        mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        List<String> providerList = mLocationManager.getProviders(true);
-        if (! providerList.contains(LocationManager.GPS_PROVIDER)) {
-            appToast("no available location provider");
-            return false;
-        }
-        // we leave setup listener to OneTimeSample to save energy
-        return true;
-    }
-
-    private boolean setupGPSListener(int interval_ms) {
-        if (mLocationManager == null)
-            return false;
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            appToast("no available location permission");
-            return false;
-        }
-        synchronized (curLocationLock) {    // the init value of gps
-            curLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            broadcastGPS(curLocation);
-        }
-        mLocationListener = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                synchronized (curLocationLock) {
-                    curLocation = location;
-                    broadcastGPS(curLocation);
-                }
-            }
-        };
-        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_ms, 0, mLocationListener);
-        return true;
-    }
-
-    private void broadcastGPS(Location location) {
-        Intent intent;
-        Context context = this;
-        if (location == null)
-            intent = new Intent(SERIAL_GPS_FILTER)
-                    .putExtra(GPS_LATI_FIELD, 0.0)
-                    .putExtra(GPS_LONGI_FIELD, 0.0);
-        else intent = new Intent(SERIAL_GPS_FILTER)
-                .putExtra(GPS_LATI_FIELD, location.getLatitude())
-                .putExtra(GPS_LONGI_FIELD, location.getLongitude());
-        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-    }
-
-    private void cleanGPSListener() {
-        if (mLocationListener != null && mLocationManager != null) {
-            mLocationManager.removeUpdates(mLocationListener);
-            mLocationListener = null;
-        }
     }
 
     private void setupUSBReceiver() {
@@ -316,7 +260,7 @@ public class SerialListener extends Service {
                 stop();
             }
             /* set up GPS listener thread */
-            setupGPSListener(GPS_UPDATE_INTERVAL);
+            mGPSTracker.setupGPSListener(GPS_UPDATE_INTERVAL);
             /* set up IO listener thread */
             mySerialIOMgr = new SerialInputOutputManager(myPort, this);
             mySerialIOMgr.start();
@@ -355,7 +299,7 @@ public class SerialListener extends Service {
                 mySerialIOMgr = null;
             }
             /* terminate GPS listener */
-            cleanGPSListener();
+            mGPSTracker.cleanGPSListener();
             /* save file */
             try {
                 if (myWriteStream != null) {
