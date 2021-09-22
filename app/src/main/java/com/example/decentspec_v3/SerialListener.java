@@ -1,26 +1,19 @@
 package com.example.decentspec_v3;
 
-import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -35,20 +28,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
-import static com.example.decentspec_v3.database.Config.*;
+import static com.example.decentspec_v3.Config.*;
 import static com.example.decentspec_v3.database.SampleFile.STAGE_RECEIVED;
 import static com.example.decentspec_v3.IntentDirectory.*;
 
 public class SerialListener extends Service {
 
-    // service states
-    private static final int DISC = 0;
-    private static final int HANDSHAKE = 1;
-    private static final int SAMPLING = 2;
-    private static final int IDLE = 3;
-
     // const
     private String TAG = "SerialListener";
+    // service states
+    public static final int SERIAL_DISC = 0;
+    public static final int SERIAL_HANDSHAKE = 1;
+    public static final int SERIAL_SAMPLING = 2;
+    public static final int SERIAL_IDLE = 3;
+
+    private static int myState = SERIAL_DISC;
 
     // notification related
     private Integer NOTI_ID = 1;
@@ -83,16 +77,17 @@ public class SerialListener extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent.getAction().equals(STOP_ACTION)) {
             Log.d(TAG, "stop the service");
+            changeState(SERIAL_DISC);
             unregisterReceiver(mUSBBroadcastReceiver);
             if (mSampleInstance != null) {
                 mSampleInstance.stop();
                 mSampleInstance = null;
             }
-            notifyState(DISC);
             stopForeground(true);
             stopSelf();
         } else {
             Log.d(TAG, "start the service");
+            changeState(SERIAL_DISC);
             mNotificationBuilder = genForegroundNotification();
             startForeground(NOTI_ID, mNotificationBuilder.build());
             myDBMgr = new FileDatabaseMgr(this);
@@ -100,7 +95,6 @@ public class SerialListener extends Service {
             mGPSTracker = new GPSTracker(this);
             if (! mGPSTracker.isAvail())
                 appToast("no available GPS Tracker");
-            notifyState(DISC);
             UsbDevice myFirstUSB = touchFirstUSB(); // it will trigger the receiver if asking for permission
             if (myFirstUSB != null) { // if we already has the permission
                 mNotificationBuilder.setContentText(NOTI_TEXT_CONNED);
@@ -129,7 +123,7 @@ public class SerialListener extends Service {
                             mSampleInstance.stop();
                             mSampleInstance = null;
                         }
-                        notifyState(DISC);
+                        changeState(SERIAL_DISC);
                     }
                     mNotificationMgr.notify(NOTI_ID, mNotificationBuilder.build());                }
                 if (state == USBBroadcastReceiver.USBChangeListener.ACTION_ATTACHED) {
@@ -149,7 +143,7 @@ public class SerialListener extends Service {
                     mNotificationBuilder.setContentText(NOTI_TEXT_DISCONN);
                     appToast("USB device disconnected");
                     mNotificationMgr.notify(NOTI_ID, mNotificationBuilder.build());
-                    notifyState(DISC);
+                    changeState(SERIAL_DISC);
                 }
                 if (state == -1) {
                     appToast("unrecognized usb acton");
@@ -181,7 +175,7 @@ public class SerialListener extends Service {
         return null;   // also return null if do not have permission, try to get the permission also
     }
 
-    private void notifyState(int state) {
+    private void changeState(int state) {
         /*
         change the state of the service
         0 - Disconnected
@@ -189,6 +183,7 @@ public class SerialListener extends Service {
         2 - sampling and transmitting
         3 - connected but idle
          */
+        myState = state;
         Intent intent = new Intent(SERIAL_STATE_FILTER)
                 .putExtra(STATE_FIELD, state);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
@@ -204,10 +199,10 @@ public class SerialListener extends Service {
         private SerialInputOutputManager mySerialIOMgr; // a stand alone runnable monitor the input
         private FileOutputStream myWriteStream = null;
         private SampleFile mySampleFileEntry = null;
-        private int myState = 0;
 
         public OneTimeSample(UsbDevice device) {
 //            appToast("start one sample");
+            myState = SERIAL_DISC;
             myDevice = device;
             myPort = setupUsbPort(0,1);
             if (myPort == null) {
@@ -246,9 +241,9 @@ public class SerialListener extends Service {
 
         private void handshake() {
             // currently didn't implement
-            notifyState(HANDSHAKE);
-            myState = HANDSHAKE;
+            changeState(SERIAL_HANDSHAKE);
         }
+
         private void startRead() {
             /* create file */
             try {
@@ -264,8 +259,7 @@ public class SerialListener extends Service {
             /* set up IO listener thread */
             mySerialIOMgr = new SerialInputOutputManager(myPort, this);
             mySerialIOMgr.start();
-            notifyState(SAMPLING);
-            myState = SAMPLING;
+            changeState(SERIAL_SAMPLING);
         }
 
         @Override
@@ -314,8 +308,7 @@ public class SerialListener extends Service {
                 myDBMgr.markStage(mySampleFileEntry, STAGE_RECEIVED);
                 mySampleFileEntry = null;
             }
-            notifyState(IDLE);
-            myState = IDLE;
+            changeState(SERIAL_IDLE);
 //            appToast("sample is finished");
         }
     }
@@ -354,5 +347,9 @@ public class SerialListener extends Service {
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
         return builder;
+    }
+
+    public static int getState() {
+        return myState;
     }
 }

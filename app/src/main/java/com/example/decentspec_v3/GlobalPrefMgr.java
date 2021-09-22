@@ -1,6 +1,5 @@
 package com.example.decentspec_v3;
 
-import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
@@ -8,10 +7,10 @@ import android.util.Log;
 import androidx.preference.PreferenceManager;
 
 import static com.example.decentspec_v3.MyUtils.genName;
-import static com.example.decentspec_v3.database.Config.*;
+import static com.example.decentspec_v3.Config.*;
 
 public abstract class GlobalPrefMgr {
-    // fields
+    // fields name
     private static final String DEVICE_ID = "id";
 
     private static SharedPreferences myPref = null;

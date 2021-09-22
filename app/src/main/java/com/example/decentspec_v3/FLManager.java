@@ -19,6 +19,12 @@ public class FLManager extends Service {
 
     // const
     private String TAG = "FLManager";
+    // service states
+    public static final int FL_TRAIN = 0;
+    public static final int FL_COMM = 1;
+    public static final int FL_IDLE = 2;
+
+    private static int myState = FL_IDLE;
 
     // notification related
     private Integer NOTI_ID = 2;
@@ -42,10 +48,13 @@ public class FLManager extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent.getAction().equals(STOP_ACTION)) {
             Log.d(TAG, "stop the service");
+            changeState(FL_IDLE);
             stopForeground(true);
+            stopTheWork();
             stopSelf();
         } else {
             Log.d(TAG, "start the service");
+            changeState(FL_IDLE);
             startForeground(NOTI_ID, genForegroundNotification());
             doTheWork();
         }
@@ -54,6 +63,22 @@ public class FLManager extends Service {
 
     private void doTheWork() {
         /* find the cached data in local storage*/
+    }
+    private void stopTheWork() {
+        /* clean up here */
+    }
+
+    private void changeState(int state) {
+        /*
+        change the state of the service
+        0 - training
+        1 - communication
+        2 - idle
+         */
+        myState = state;
+        Intent intent = new Intent(FL_STATE_FILTER)
+                .putExtra(STATE_FIELD, state);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     // utility methods
@@ -80,5 +105,9 @@ public class FLManager extends Service {
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
         return builder.build();
+    }
+
+    public static int getState() {
+        return myState;
     }
 }

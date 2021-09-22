@@ -31,7 +31,15 @@ import org.w3c.dom.Text;
 
 import java.util.List;
 
+import static com.example.decentspec_v3.FLManager.FL_COMM;
+import static com.example.decentspec_v3.FLManager.FL_IDLE;
+import static com.example.decentspec_v3.FLManager.FL_TRAIN;
 import static com.example.decentspec_v3.IntentDirectory.*;
+import static com.example.decentspec_v3.SerialListener.SERIAL_DISC;
+import static com.example.decentspec_v3.SerialListener.SERIAL_HANDSHAKE;
+import static com.example.decentspec_v3.SerialListener.SERIAL_IDLE;
+import static com.example.decentspec_v3.SerialListener.SERIAL_SAMPLING;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -46,8 +54,6 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private Switch FL_switch;
 
-    // live data source
-    private DBViewModel mDBViewModel;
     private RecyclerView myDBRV;
     private RecyclerViewAdapter myDBRVAdapter;
 
@@ -59,11 +65,18 @@ public class MainActivity extends AppCompatActivity {
         serial_switch = findViewById(R.id.serial_switch);
         FL_switch = findViewById(R.id.FL_switch);
 
+        // initial states read and resource binding
+        // get the states of two service and show
         serial_switch.setChecked(ifMyServiceRunning(SerialListener.class));
         FL_switch.setChecked(ifMyServiceRunning(FLManager.class));
+        switchRadioFL(SerialListener.getState());
+        switchRadioSerial(FLManager.getState());
 
         myDBRV = findViewById(R.id.rv_database);
-        mDBViewModel = new ViewModelProvider(this).get(DBViewModel.class);
+
+        // live data binding
+        // database
+        DBViewModel mDBViewModel = new ViewModelProvider(this).get(DBViewModel.class);
         Activity activityContext = this;
         mDBViewModel.pull().observe(this, new Observer<List<SampleFile>>() {
             @Override
@@ -73,13 +86,14 @@ public class MainActivity extends AppCompatActivity {
                 myDBRV.setAdapter(myDBRVAdapter);
             }
         });
-        // update states value from service
+
         // gps update
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 new BroadcastReceiver() {
                     @Override
                     public void onReceive(Context context, Intent intent) {
                         TextView GPS_text = findViewById(R.id.GPS_textview);
+                        @SuppressLint("DefaultLocale")
                         String GPS_value = String.format("(%f ,%f)",
                                 intent.getDoubleExtra(GPS_LATI_FIELD ,0.0),
                                 intent.getDoubleExtra(GPS_LONGI_FIELD, 0.0));
@@ -94,23 +108,47 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onReceive(Context context, Intent intent) {
                         int state = intent.getIntExtra(STATE_FIELD, 0);
-                        int radioId = findViewById(R.id.RB_board_disc).getId();
-                        switch (state) {
-                            case 0: radioId = findViewById(R.id.RB_board_disc).getId(); break;
-                            case 1: radioId = findViewById(R.id.RB_board_hand).getId(); break;
-                            case 2: radioId = findViewById(R.id.RB_board_sample).getId(); break;
-                            case 3: radioId = findViewById(R.id.RB_board_idle).getId(); break;
-                        }
-                        RadioGroup serialRadio = findViewById(R.id.serialStateGroup);
-                        serialRadio.check(radioId);
+                        switchRadioSerial(state);
                     }
                 }, new IntentFilter(SERIAL_STATE_FILTER)
+        );
+        // FL service update
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        int state = intent.getIntExtra(STATE_FIELD, 0);
+                        switchRadioFL(state);
+                    }
+                }, new IntentFilter(FL_STATE_FILTER)
         );
 
         // first time app setup
         GlobalPrefMgr.init(this);
         TextView device_id = findViewById(R.id.device_id);
         device_id.setText(GlobalPrefMgr.getName());
+    }
+
+    private void switchRadioSerial(int state) {
+        int radioId = findViewById(R.id.RB_board_disc).getId();
+        switch (state) {
+            case SERIAL_DISC: radioId = findViewById(R.id.RB_board_disc).getId(); break;
+            case SERIAL_HANDSHAKE: radioId = findViewById(R.id.RB_board_hand).getId(); break;
+            case SERIAL_SAMPLING: radioId = findViewById(R.id.RB_board_sample).getId(); break;
+            case SERIAL_IDLE: radioId = findViewById(R.id.RB_board_idle).getId(); break;
+        }
+        RadioGroup serialRadio = findViewById(R.id.serialStateGroup);
+        serialRadio.check(radioId);
+    }
+    private void switchRadioFL(int state) {
+        int radioId = findViewById(R.id.RB_board_disc).getId();
+        switch (state) {
+            case FL_TRAIN: radioId = findViewById(R.id.RB_ML_train).getId(); break;
+            case FL_COMM: radioId = findViewById(R.id.RB_ML_comm).getId(); break;
+            case FL_IDLE: radioId = findViewById(R.id.RB_ML_idle).getId(); break;
+        }
+        RadioGroup FLRadio = findViewById(R.id.FLStateGroup);
+        FLRadio.check(radioId);
     }
 
     @Override

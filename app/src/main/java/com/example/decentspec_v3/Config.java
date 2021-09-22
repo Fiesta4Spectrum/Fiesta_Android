@@ -1,4 +1,4 @@
-package com.example.decentspec_v3.database;
+package com.example.decentspec_v3;
 
 public class Config {
     public static final int DEVICE_ID_LENGTH = 10;
