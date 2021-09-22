@@ -17,6 +17,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.RadioGroup;
 import android.widget.Switch;
@@ -26,7 +27,11 @@ import android.widget.Toast;
 import com.example.decentspec_v3.database.DBViewModel;
 import com.example.decentspec_v3.database.SampleFile;
 
+import org.w3c.dom.Text;
+
 import java.util.List;
+
+import static com.example.decentspec_v3.IntentDirectory.*;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -34,13 +39,6 @@ public class MainActivity extends AppCompatActivity {
 
     // const
     private String TAG = "MainActivity";
-    private String STOP_ACTION = "STOP";
-    private String START_ACTION = "START";
-    private String ID_INTENT_FILTER = "device.id.update";
-    private String ID_UPDATE_FIELD = "new_id";
-    private String SERIAL_SERVICE_FILTER = "service.serial";
-    private String FL_SERVICE_FILTER = "service.fl";
-    private String STATE_FIELD = "state";
 
     // UI component
     @SuppressLint("UseSwitchCompatOrMaterialCode")
@@ -76,16 +74,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         // update states value from service
-        // device id update
+        // gps update
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 new BroadcastReceiver() {
                     @Override
                     public void onReceive(Context context, Intent intent) {
-                        String new_id = intent.getStringExtra(ID_UPDATE_FIELD);
-                        TextView device_id_text = findViewById(R.id.device_id);
-                        device_id_text.setText(new_id);
+                        TextView GPS_text = findViewById(R.id.GPS_textview);
+                        String GPS_value = String.format("(%f ,%f)",
+                                intent.getDoubleExtra(GPS_LATI_FIELD ,0.0),
+                                intent.getDoubleExtra(GPS_LONGI_FIELD, 0.0));
+                        GPS_text.setText(GPS_value);
+                        Log.d(TAG, "GPS updates");
                     }
-                }, new IntentFilter(ID_INTENT_FILTER)
+                }, new IntentFilter(SERIAL_GPS_FILTER)
         );
         // serial service update
         LocalBroadcastManager.getInstance(this).registerReceiver(
@@ -103,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
                         RadioGroup serialRadio = findViewById(R.id.serialStateGroup);
                         serialRadio.check(radioId);
                     }
-                }, new IntentFilter(SERIAL_SERVICE_FILTER)
+                }, new IntentFilter(SERIAL_STATE_FILTER)
         );
     }
 

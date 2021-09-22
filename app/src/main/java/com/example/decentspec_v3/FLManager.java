@@ -12,15 +12,12 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import static com.example.decentspec_v3.IntentDirectory.*;
+
+
 public class FLManager extends Service {
 
-    private String device_id = null;
-
     // const
-    private String STOP_ACTION = "STOP";
-    private String START_ACTION = "START";
-    private String ID_INTENT_FILTER = "device id update";
-    private String ID_UPDATE_FIELD = "new_id";
     private String TAG = "FLManager";
 
     // notification related
@@ -57,14 +54,6 @@ public class FLManager extends Service {
 
     private void doTheWork() {
         /* find the cached data in local storage*/
-        device_id = MyUtils.genName(10);
-        broadcastID();
-    }
-
-    private void broadcastID() {
-        Intent intent = new Intent(ID_INTENT_FILTER);
-        intent.putExtra(ID_UPDATE_FIELD, device_id);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     // utility methods

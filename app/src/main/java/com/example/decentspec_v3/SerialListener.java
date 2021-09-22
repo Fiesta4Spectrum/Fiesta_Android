@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static com.example.decentspec_v3.database.SampleFile.STAGE_RECEIVED;
+import static com.example.decentspec_v3.IntentDirectory.*;
 
 public class SerialListener extends Service {
 
@@ -46,8 +47,6 @@ public class SerialListener extends Service {
     private static final int IDLE = 3;
 
     // const
-    private String STOP_ACTION = "STOP";
-    private String START_ACTION = "START";
     private String TAG = "SerialListener";
 
     // notification related
@@ -77,10 +76,6 @@ public class SerialListener extends Service {
     // sample database related
     private OneTimeSample mSampleInstance = null;
     private FileDatabaseMgr myDBMgr = null;
-
-    // intent related
-    private String SERIAL_SERVICE_FILTER = "service.serial";
-    private String STATE_FIELD = "state";
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -121,9 +116,8 @@ public class SerialListener extends Service {
     private boolean setupLocationMgr() {
         mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         List<String> providerList = mLocationManager.getProviders(true);
-        if (!providerList.contains(LocationManager.GPS_PROVIDER)) {
+        if (! providerList.contains(LocationManager.GPS_PROVIDER)) {
             appToast("no available location provider");
-            mLocationManager = null;
             return false;
         }
         // we leave setup listener to OneTimeSample to save energy
@@ -139,17 +133,32 @@ public class SerialListener extends Service {
         }
         synchronized (curLocationLock) {    // the init value of gps
             curLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            broadcastGPS(curLocation);
         }
         mLocationListener = new LocationListener() {
             @Override
-            public void onLocationChanged(@NonNull Location location) {
+            public void onLocationChanged(Location location) {
                 synchronized (curLocationLock) {
                     curLocation = location;
+                    broadcastGPS(curLocation);
                 }
             }
         };
         mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_ms, 0, mLocationListener);
         return true;
+    }
+
+    private void broadcastGPS(Location location) {
+        Intent intent;
+        Context context = this;
+        if (location == null)
+            intent = new Intent(SERIAL_GPS_FILTER)
+                    .putExtra(GPS_LATI_FIELD, 0.0)
+                    .putExtra(GPS_LONGI_FIELD, 0.0);
+        else intent = new Intent(SERIAL_GPS_FILTER)
+                .putExtra(GPS_LATI_FIELD, location.getLatitude())
+                .putExtra(GPS_LONGI_FIELD, location.getLongitude());
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 
     private void cleanGPSListener() {
@@ -236,8 +245,8 @@ public class SerialListener extends Service {
         2 - sampling and transmitting
         3 - connected but idle
          */
-        Intent intent = new Intent(SERIAL_SERVICE_FILTER);
-        intent.putExtra(STATE_FIELD, state);
+        Intent intent = new Intent(SERIAL_STATE_FILTER)
+                .putExtra(STATE_FIELD, state);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
@@ -377,6 +386,7 @@ public class SerialListener extends Service {
             }
         });
     }
+
     private NotificationCompat.Builder genForegroundNotification() {
         // each foreground service need a notification
         // only support notification above android O;
