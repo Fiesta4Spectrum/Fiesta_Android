@@ -103,6 +103,7 @@ public class FLManagerService extends Service {
         return START_NOT_STICKY;
     }
 
+    private volatile boolean running = true;
     private void doTheWork() {
         /* find the cached data in local storage*/
         mTrainingTrigger = new TrainingTrigger();
@@ -179,22 +180,27 @@ public class FLManagerService extends Service {
 
                 mTrainingTrigger.markTraining();
                 for (int i = 0; i < mTrainingPara.EPOCH_NUM; i++) {
+                    try {
+                        // check interrupt signal between epochs
+                        if (Thread.currentThread().isInterrupted()) {
+                            mTrainingTrigger.markReceived(); // roll back database
+                            cleanup();
+                            return; // early return due to interrupt
+                        }
 
-                    // check interrupt signal between epochs
-                    if (Thread.currentThread().isInterrupted()) {
+                        ScoreListener mySL = new ScoreListener(mTrainingPara);
+                        localModel.setListeners(mySL);
+                        localModel.fit(localDataset);
+                        Log.d(TAG, "one epoch complete!");
+                        if (i == 0)
+                            init_loss = mySL.getScore(); // TODO this is not accurate, a score after one epoch training.
+                        if (i == mTrainingPara.EPOCH_NUM - 1)
+                            end_loss = mySL.getScore();
+                    } catch (RuntimeException e) {
                         mTrainingTrigger.markReceived(); // roll back database
                         cleanup();
                         return; // early return due to interrupt
                     }
-
-                    ScoreListener mySL = new ScoreListener(mTrainingPara);
-                    localModel.setListeners(mySL);
-                    localModel.fit(localDataset);
-                    Log.d(TAG, "one epoch complete!");
-                    if (i == 0)
-                        init_loss = mySL.getScore(); // TODO this is not accurate, a score after one epoch training.
-                    if (i == mTrainingPara.EPOCH_NUM - 1)
-                        end_loss = mySL.getScore();
                 }
 
                 // upload to miner
@@ -225,6 +231,7 @@ public class FLManagerService extends Service {
 
             private void cleanup() { // call when interrupted
                 changeState(FL_IDLE);
+
                 // seems no specific things need to do
             }
 
@@ -234,8 +241,6 @@ public class FLManagerService extends Service {
     private void stopTheWork() {
         if (myDaemon.isAlive())
             myDaemon.interrupt();
-        mTrainingTrigger.clean();
-        mTrainingTrigger = null;
         /* clean up here */
     }
 
@@ -301,9 +306,6 @@ public class FLManagerService extends Service {
         public void markReceived() {
             if (curFile == null) return;
             mDBMgr.markStage(curFile, STAGE_RECEIVED);
-        }
-        public void clean() {
-            mDBMgr = null;
         }
     }
 
