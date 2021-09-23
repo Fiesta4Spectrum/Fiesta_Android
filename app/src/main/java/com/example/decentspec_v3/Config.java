@@ -7,6 +7,7 @@ public class Config {
     public static final int GPS_UPDATE_INTERVAL = 1000; // 1s update
     // ML related
     public static final int ML_TASK_INTERVAL = 2000; // check the condition per 2s
+    public static final int MAX_LOCAL_SET_SIZE = 10000;
 
     // api
     public static final String SEED_NODE = "http://api.decentspec.org:5000";

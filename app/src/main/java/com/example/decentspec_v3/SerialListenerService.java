@@ -74,6 +74,12 @@ public class SerialListenerService extends Service {
     }
 
     @Override
+    public void onCreate() {
+        super.onCreate();
+        GlobalPrefMgr.init(this);
+    }
+
+    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent.getAction().equals(STOP_ACTION)) {
             Log.d(TAG, "stop the service");

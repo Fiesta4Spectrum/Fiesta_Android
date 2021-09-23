@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        GlobalPrefMgr.init(this);
 
         serial_switch = findViewById(R.id.serial_switch);
         FL_switch = findViewById(R.id.FL_switch);
@@ -122,7 +123,6 @@ public class MainActivity extends AppCompatActivity {
         );
 
         // first time app setup
-        GlobalPrefMgr.init(this);
         TextView device_id = findViewById(R.id.device_id);
         device_id.setText(GlobalPrefMgr.getName());
     }

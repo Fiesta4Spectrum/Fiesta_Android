@@ -24,12 +24,16 @@ import com.example.decentspec_v3.database.FileDatabaseMgr;
 import com.example.decentspec_v3.database.SampleFile;
 import com.example.decentspec_v3.federated_learning.FileAccessor;
 import com.example.decentspec_v3.federated_learning.HTTPAccessor;
+import com.example.decentspec_v3.federated_learning.HelperMethods;
+import com.example.decentspec_v3.federated_learning.ScoreRecorder;
 import com.example.decentspec_v3.federated_learning.TrainingPara;
 
 import org.deeplearning4j.datasets.iterator.FloatsDataSetIterator;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.json.JSONException;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.primitives.Pair;
+import org.nd4j.shade.jackson.core.JsonProcessingException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,6 +82,7 @@ public class FLManagerService extends Service {
     @Override
     public void onCreate() {
         this.context = this;
+        GlobalPrefMgr.init(this);
         super.onCreate();
     }
 
@@ -102,6 +107,8 @@ public class FLManagerService extends Service {
         /* find the cached data in local storage*/
         mTrainingTrigger = new TrainingTrigger();
         myDaemon = new Thread(new Runnable() {
+            private String TAG = "trainingThread";
+
             @Override
             public void run() {
                 while (!Thread.currentThread().isInterrupted()) {
@@ -122,23 +129,51 @@ public class FLManagerService extends Service {
             }
 
             private void oneLocalTraining(SampleFile file) {
-                HTTPAccessor mHTTPAccessor = new HTTPAccessor(context);
-                FileAccessor mFileAccessor = new FileAccessor(context);
-                List<Pair<float[], float[]>> localTrainList = mFileAccessor.readFrom(file.fileName);
-                ArrayList<String> minerList = mHTTPAccessor.fetchMinerList();
+
+                // fetching knowledge
                 TrainingPara mTrainingPara = new TrainingPara();
+                HTTPAccessor mHTTPAccessor = new HTTPAccessor(context);
+                ArrayList<String> minerList = mHTTPAccessor.fetchMinerList();
                 mHTTPAccessor.getLatestGlobal(minerList.get(0), mTrainingPara);
-                /* wait to join the two thread: reading file and http request*/
-                // TODO
+                FileAccessor mFileAccessor = new FileAccessor(context);
+                List<Pair<float[], float[]>> localTrainList = mFileAccessor.readFrom(file.fileName, mTrainingPara);
+                // TODO check the blocking threads should join before proceed
+
+                // create model
                 DataSetIterator localDataset = new FloatsDataSetIterator(localTrainList, mTrainingPara.BATCH_SIZE);
                 MultiLayerNetwork localModel = mTrainingPara.build();
+                localModel.init();
 
-                mHTTPAccessor.sendTrainedLocal(minerList.get(0), mTrainingPara);
+                // init with global weight
+                for (String key : mTrainingPara.GLOBAL_WEIGHT.keySet()) {
+                    localModel.setParam(key, mTrainingPara.GLOBAL_WEIGHT.get(key));
+                }
+
+                // training
+                double init_loss = 0.0;
+                double end_loss = 0.0;
+                for (int i = 0; i < mTrainingPara.EPOCH_NUM; i++) {
+                    ScoreRecorder mySR = new ScoreRecorder(mTrainingPara);
+                    localModel.setListeners(mySR);
+                    localModel.fit(localDataset);
+                    Log.d(TAG, "one epoch complete!");
+                    double score = mySR.getScore();
+                    if (i == 0)
+                        init_loss = score; // TODO this is not accurate, a score after one epoch training.
+                    if (i == mTrainingPara.EPOCH_NUM - 1)
+                        end_loss = score;
+                }
+
+                // upload to miner
+                try {
+                    mHTTPAccessor.sendTrainedLocal( minerList.get(0),
+                                                    mTrainingPara.DATASET_SIZE,
+                                                    init_loss - end_loss,
+                                                    HelperMethods.paramTable2stateDict(localModel.paramTable()));
+                } catch (JsonProcessingException | JSONException e) {
+                    e.printStackTrace();
+                }
             }
-
-
-
-
 
         });
         myDaemon.start();
