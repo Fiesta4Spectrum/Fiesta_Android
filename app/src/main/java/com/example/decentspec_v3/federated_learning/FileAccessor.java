@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.example.decentspec_v3.database.FileDatabase;
 
+
 import org.nd4j.linalg.primitives.Pair;
 
 import java.io.BufferedReader;
@@ -16,7 +17,7 @@ import java.util.List;
 import static com.example.decentspec_v3.Config.*;
 
 public class FileAccessor {
-    private Context context;
+    private final Context context;
 
     public FileAccessor(Context context) {
         this.context = context;
@@ -47,6 +48,7 @@ public class FileAccessor {
         trainList = trainList.subList(0, MAX_LOCAL_SET_SIZE);
 
         tp.DATASET_SIZE = trainList.size();
+        tp.DATASET_NAME = fileName;
         return trainList;
     }
 
@@ -55,7 +57,7 @@ public class FileAccessor {
         float[] inList = new float[inSize];
         float[] outList = new float[outSize];
         if (inSize + outSize != strList.length) {
-            Log.d("trainingThread", "Error: incompatible model structure!");
+            Log.d("FLManager", "Error: incompatible model structure!");
             return null;
         }
         for (int i=0; i<inSize; i++) {
@@ -65,9 +67,5 @@ public class FileAccessor {
             outList[i-inSize] = (Float.parseFloat(strList[i]) - tp.DATASET_AVG.get(i)) / tp.DATASET_STD.get(i);
         }
         return new Pair<>(inList, outList);
-    }
-
-    public void join() {
-
     }
 }

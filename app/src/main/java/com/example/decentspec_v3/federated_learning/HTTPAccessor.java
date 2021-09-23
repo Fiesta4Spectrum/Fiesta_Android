@@ -27,17 +27,19 @@ import static com.example.decentspec_v3.Config.API_SEND_LOCAL;
 import static com.example.decentspec_v3.Config.SEED_NODE;
 
 public class HTTPAccessor {
-    private Context context;
-    private RequestQueue HTTPQueue;
-    private boolean threadDone;
+    private final RequestQueue HTTPQueue;
+    private volatile boolean threadDone; // thread flag need to be volatile to avoid cache
+                                         // no need to add lock since only one writer and one reader
+    private volatile boolean responded;
 
     public HTTPAccessor(Context context) {
-        this.context = context;
         this.HTTPQueue = Volley.newRequestQueue(context);
     }
-    public ArrayList<String> fetchMinerList() {
-        ArrayList<String> minerList = new ArrayList<>();
+
+    public boolean fetchMinerList(TrainingPara tp) {
+        tp.MINER_LIST = new ArrayList<>();
         threadDone = false;
+        responded = false;
         StringRequest stringRequest = new StringRequest(Request.Method.GET, SEED_NODE + API_GET_MINER,
                 new Response.Listener<String>() {
                     @Override
@@ -46,12 +48,13 @@ public class HTTPAccessor {
                             JSONObject jsonRsp = new JSONObject(response);
                             JSONArray peers = jsonRsp.getJSONArray("peers");
                             for (int i=0; i < peers.length(); i++) {
-                                minerList.add(peers.getString(i));
+                                tp.MINER_LIST.add(peers.getString(i));
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
                         threadDone = true;
+                        responded = true;
                     }
                 },
                 new Response.ErrorListener() {
@@ -59,14 +62,16 @@ public class HTTPAccessor {
                     public void onErrorResponse(VolleyError error) {
                         Log.d("HTTP", error.toString());
                         threadDone = true;
+                        responded = false;
                     }
                 });
         HTTPQueue.add(stringRequest);
         join();
-        return minerList;
+        return responded;
     }
-    public void getLatestGlobal(String serverAddr, TrainingPara tp) {
+    public boolean getLatestGlobal(String serverAddr, TrainingPara tp) {
         threadDone = false;
+        responded = false;
         StringRequest stringRequest = new StringRequest(Request.Method.GET, serverAddr + API_GET_GLOBAL,
                 new Response.Listener<String>() {
                     @Override
@@ -84,24 +89,26 @@ public class HTTPAccessor {
                             tp.LEARNING_RATE = train_json.getDouble("lr");
                             tp.EPOCH_NUM = train_json.getInt("epoch");
                             tp.MODEL_STRUCTURE = HelperMethods.JSONArray2IntList(jsonRsp.getJSONArray("layerStructure"));
-                            threadDone = true;
                         } catch (JSONException | JsonProcessingException e) {
                             e.printStackTrace();
-                            threadDone = true;
                         }
+                        responded = true;
+                        threadDone = true;
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Log.d("HTTP", error.toString());
+                        responded =false;
                         threadDone = true;
                     }
                 });
         HTTPQueue.add(stringRequest);
         join();
+        return responded;
     }
-    public void sendTrainedLocal(String serverAddr, int size, double delta_loss, JSONObject localWeight) throws JSONException {
+    public boolean sendTrainedLocal(String serverAddr, int size, double delta_loss, JSONObject localWeight) throws JSONException {
             /*
                 MLdata = {
                     'stat' : {  'size' : size,
@@ -118,6 +125,7 @@ public class HTTPAccessor {
                 }
             */
         threadDone = false;
+        responded = false;
         String url = serverAddr + API_SEND_LOCAL;
         JSONObject MLData = new JSONObject();
         JSONObject MLData_stat = new JSONObject();
@@ -139,6 +147,7 @@ public class HTTPAccessor {
                     @Override
                     public void onResponse(String response) {
                         threadDone = true;
+                        responded = true;
                     }
                 },
                 new Response.ErrorListener() {
@@ -146,6 +155,7 @@ public class HTTPAccessor {
                     public void onErrorResponse(VolleyError error) {
                         Log.d("HTTP", error.toString());
                         threadDone = true;
+                        responded = false;
                     }
                 })
         {
@@ -161,8 +171,8 @@ public class HTTPAccessor {
         };
         HTTPQueue.add(stringRequest);
         join();
+        return responded;
     }
-
     public void join() {
         while (! threadDone); // spin here to synchronize
     }

@@ -45,15 +45,15 @@ public class SerialListenerService extends Service {
     private static int myState = SERIAL_DISC;
 
     // notification related
-    private Integer NOTI_ID = 1;
+    private final static Integer NOTI_ID = 1;
+    private final static String CHANNEL_ID = "Serial_Channel";
+    private final static String CHANNEL_NAME = "DecentSpec Serial Notification";
+    private final static String CHANNEL_DESC = "no description";
+    private final static String NOTI_TITLE = "DecentSpec Serial Listener";
+    private final static String NOTI_TEXT_DISCONN = "Try to reconnect USB device";
+    private final static String NOTI_TEXT_CONNED = "one USB device attached";
+    private final static String NOTI_TICKER = "Serial Listener is initiating ...";
     private NotificationManager mNotificationMgr = null;
-    private String CHANNEL_ID = "Serial_Channel";
-    private String CHANNEL_NAME = "DecentSpec Serial Notification";
-    private String CHANNEL_DESC = "no description";
-    private String NOTI_TITLE = "DecentSpec Serial Listener";
-    private String NOTI_TEXT_DISCONN = "Try to reconnect USB device";
-    private String NOTI_TEXT_CONNED = "one USB device attached";
-    private String NOTI_TICKER = "Serial Listener is initiating ...";
     private NotificationCompat.Builder mNotificationBuilder = null;
 
     // usb related

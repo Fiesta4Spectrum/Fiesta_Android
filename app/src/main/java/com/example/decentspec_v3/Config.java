@@ -7,7 +7,8 @@ public class Config {
     public static final int GPS_UPDATE_INTERVAL = 1000; // 1s update
     // ML related
     public static final int ML_TASK_INTERVAL = 2000; // check the condition per 2s
-    public static final int MAX_LOCAL_SET_SIZE = 10000;
+    public static final int MAX_LOCAL_SET_SIZE = 10000; // too large the size will lead to too long time training
+    public static final String DUMMY_FILENAME = "GPS-power.dat";
 
     // api
     public static final String SEED_NODE = "http://api.decentspec.org:5000";

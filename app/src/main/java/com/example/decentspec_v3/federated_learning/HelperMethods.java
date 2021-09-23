@@ -20,10 +20,11 @@ public class HelperMethods {
     // ML helper methods
     // try to translate between paramTable(dl4j) and stateDict(pyTorch)
     public static Map<String, INDArray> stateDict2paramTable(JSONObject stateDict) throws JsonProcessingException, JSONException {
-        Map<String, Object> ref = new Gson().fromJson(stateDict.toString(), HashMap.class);
+        HashMap ref = new Gson().fromJson(stateDict.toString(), HashMap.class);
         int layerNum = ref.size()/2;
         Map<String, INDArray> result = new HashMap<>();
-        for (String key: ref.keySet()) {
+        for (Object keyObj: ref.keySet()) {
+            String key = (String) keyObj;
             String jsonArray = stateDict.getString(key);
             int depth = key.contains("weight") ? 2:1;
             INDArray ndArray = Json2IDNArray(new Gson().fromJson(jsonArray, JsonElement.class), depth);

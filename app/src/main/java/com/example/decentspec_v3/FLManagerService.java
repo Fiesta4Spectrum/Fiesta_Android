@@ -25,7 +25,7 @@ import com.example.decentspec_v3.database.SampleFile;
 import com.example.decentspec_v3.federated_learning.FileAccessor;
 import com.example.decentspec_v3.federated_learning.HTTPAccessor;
 import com.example.decentspec_v3.federated_learning.HelperMethods;
-import com.example.decentspec_v3.federated_learning.ScoreRecorder;
+import com.example.decentspec_v3.federated_learning.ScoreListener;
 import com.example.decentspec_v3.federated_learning.TrainingPara;
 
 import org.deeplearning4j.datasets.iterator.FloatsDataSetIterator;
@@ -38,7 +38,7 @@ import org.nd4j.shade.jackson.core.JsonProcessingException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.example.decentspec_v3.Config.ML_TASK_INTERVAL;
+import static com.example.decentspec_v3.Config.*;
 import static com.example.decentspec_v3.IntentDirectory.*;
 import static com.example.decentspec_v3.database.SampleFile.STAGE_RECEIVED;
 import static com.example.decentspec_v3.database.SampleFile.STAGE_TRAINED;
@@ -48,7 +48,7 @@ import static com.example.decentspec_v3.database.SampleFile.STAGE_TRAINING;
 public class FLManagerService extends Service {
 
     // const
-    private String TAG = "FLManager";
+    private static final String TAG = "FLManager";
     // service states
     public static final int FL_TRAIN = 0;
     public static final int FL_COMM = 1;
@@ -57,14 +57,14 @@ public class FLManagerService extends Service {
     private static int myState = FL_IDLE;
 
     // notification related
-    private Integer NOTI_ID = 2;
     private NotificationManager mNotificationMgr = null;
-    private String CHANNEL_ID = "FL_Channel";
-    private String CHANNEL_NAME = "DecentSpec FL Notification";
-    private String CHANNEL_DESC = "no description";
-    private String NOTI_TITLE = "DecentSpec FL Manager";
-    private String NOTI_TEXT = "Federated Learning Manager is running in background ...";
-    private String NOTI_TICKER = "Federated Learning Manager is initiating ...";
+    private static final Integer NOTI_ID = 2;
+    private static final String CHANNEL_ID = "FL_Channel";
+    private static final String CHANNEL_NAME = "DecentSpec FL Notification";
+    private static final String CHANNEL_DESC = "no description";
+    private static final String NOTI_TITLE = "DecentSpec FL Manager";
+    private static final String NOTI_TEXT = "FL Manager is running in background";
+    private static final String NOTI_TICKER = "FL Manager is initiating ...";
 
     // spinner
     private Context context;
@@ -107,41 +107,64 @@ public class FLManagerService extends Service {
         /* find the cached data in local storage*/
         mTrainingTrigger = new TrainingTrigger();
         myDaemon = new Thread(new Runnable() {
-            private String TAG = "trainingThread";
-
             @Override
             public void run() {
+                mTrainingTrigger.cleanUpDatabase();
                 while (!Thread.currentThread().isInterrupted()) {
                     try {
                         SampleFile dataFile = mTrainingTrigger.getDataset();
                         if (dataFile != null) {
                             /* use this file to make a local train */
                             oneLocalTraining(dataFile);
+                            // end of one time training
                         } else {
                             Thread.sleep(ML_TASK_INTERVAL); // save time through check the env per interval
                         }
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
+                        Log.d(TAG, "interrupted during sleep");
+                        cleanup();
                         return;
                     }
                 }
+                cleanup();
+                // end due to external interrupt
                 return;
             }
 
+            // TODO add more fine interrupt check
             private void oneLocalTraining(SampleFile file) {
 
                 // fetching knowledge
-                TrainingPara mTrainingPara = new TrainingPara();
-                HTTPAccessor mHTTPAccessor = new HTTPAccessor(context);
-                ArrayList<String> minerList = mHTTPAccessor.fetchMinerList();
-                mHTTPAccessor.getLatestGlobal(minerList.get(0), mTrainingPara);
-                FileAccessor mFileAccessor = new FileAccessor(context);
-                List<Pair<float[], float[]>> localTrainList = mFileAccessor.readFrom(file.fileName, mTrainingPara);
-                // TODO check the blocking threads should join before proceed
-
+                changeState(FL_COMM);
+                TrainingPara mTrainingPara = new TrainingPara();                        // ML context info from remote
+                HTTPAccessor mHTTPAccessor = new HTTPAccessor(context);                 // http entity
+                if (! mHTTPAccessor.fetchMinerList(mTrainingPara)) {                    // get minerlist
+                    Log.d(TAG, "seed node no connection");
+                    cleanup();
+                    return;
+                };
+                for (int i = 0; i < mTrainingPara.MINER_LIST.size(); i++) {             // get ML context
+                    if (mHTTPAccessor.getLatestGlobal(mTrainingPara.MINER_LIST.get(i), mTrainingPara))
+                        break;
+                    if (i == mTrainingPara.MINER_LIST.size() - 1) {
+                        Log.d(TAG, "[fetchGlobal] miner node no connection");
+                        cleanup();
+                        return;
+                    }
+                }
+                FileAccessor mFileAccessor = new FileAccessor(context);                 // io entity
+                // TODO use the real file data
+                // List<Pair<float[], float[]>> localTrainList = mFileAccessor.readFrom(file.fileName, mTrainingPara);
+                List<Pair<float[], float[]>> localTrainList = mFileAccessor.readFrom(DUMMY_FILENAME, mTrainingPara);
+                if (localTrainList == null || localTrainList.size() == 0) {
+                    Log.d(TAG, "file not available");
+                    cleanup();
+                    return;
+                }
                 // create model
                 DataSetIterator localDataset = new FloatsDataSetIterator(localTrainList, mTrainingPara.BATCH_SIZE);
-                MultiLayerNetwork localModel = mTrainingPara.build();
+                MultiLayerNetwork localModel = mTrainingPara.buildModel();
                 localModel.init();
 
                 // init with global weight
@@ -150,29 +173,59 @@ public class FLManagerService extends Service {
                 }
 
                 // training
+                changeState(FL_TRAIN);
                 double init_loss = 0.0;
                 double end_loss = 0.0;
+
+                mTrainingTrigger.markTraining();
                 for (int i = 0; i < mTrainingPara.EPOCH_NUM; i++) {
-                    ScoreRecorder mySR = new ScoreRecorder(mTrainingPara);
-                    localModel.setListeners(mySR);
+
+                    // check interrupt signal between epochs
+                    if (Thread.currentThread().isInterrupted()) {
+                        mTrainingTrigger.markReceived(); // roll back database
+                        cleanup();
+                        return; // early return due to interrupt
+                    }
+
+                    ScoreListener mySL = new ScoreListener(mTrainingPara);
+                    localModel.setListeners(mySL);
                     localModel.fit(localDataset);
                     Log.d(TAG, "one epoch complete!");
-                    double score = mySR.getScore();
                     if (i == 0)
-                        init_loss = score; // TODO this is not accurate, a score after one epoch training.
+                        init_loss = mySL.getScore(); // TODO this is not accurate, a score after one epoch training.
                     if (i == mTrainingPara.EPOCH_NUM - 1)
-                        end_loss = score;
+                        end_loss = mySL.getScore();
                 }
 
                 // upload to miner
                 try {
-                    mHTTPAccessor.sendTrainedLocal( minerList.get(0),
-                                                    mTrainingPara.DATASET_SIZE,
-                                                    init_loss - end_loss,
-                                                    HelperMethods.paramTable2stateDict(localModel.paramTable()));
+                    changeState(FL_COMM);
+                    for (int i = 0; i < mTrainingPara.MINER_LIST.size(); i++) {
+                        if (mHTTPAccessor.sendTrainedLocal(
+                                mTrainingPara.MINER_LIST.get(i),
+                                mTrainingPara.DATASET_SIZE,
+                                init_loss - end_loss,
+                                HelperMethods.paramTable2stateDict(localModel.paramTable())))
+                            break;
+                        if (i == mTrainingPara.MINER_LIST.size() - 1) {
+                            Log.d(TAG, "[updateLocal] miner node no connection");
+                            mTrainingTrigger.markReceived(); // roll back
+                            cleanup();
+                            return;
+                        }
+                    }
+
                 } catch (JsonProcessingException | JSONException e) {
                     e.printStackTrace();
                 }
+                mTrainingTrigger.markTrained();
+                cleanup();
+                return;
+            }
+
+            private void cleanup() { // call when interrupted
+                changeState(FL_IDLE);
+                // seems no specific things need to do
             }
 
         });
@@ -188,19 +241,27 @@ public class FLManagerService extends Service {
 
     private class TrainingTrigger {
 
-        private Intent batteryStatus;
         private FileDatabaseMgr mDBMgr;
         private ConnectivityManager mConnMgr;
         private SampleFile curFile;
 
         public TrainingTrigger() {
-            batteryStatus = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
             mDBMgr = new FileDatabaseMgr(context);
             mConnMgr = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        }
+        public void cleanUpDatabase() {
+            List<SampleFile> allList = mDBMgr.getFileList(); // it is not in main thread so its fine
+            for (SampleFile file : allList) {
+                if (file.stage == STAGE_TRAINING) {
+                    mDBMgr.markStage(file, STAGE_RECEIVED);
+                }
+            }
         }
         public SampleFile getDataset() {
             if (! (myState == FL_IDLE))                 // first no other training going on
                 return null;
+            Log.d("trainingThread", "currently wifi: " + wifiReady() +
+                                            ", charging: " + chargerReady());
             if (! (wifiReady() && chargerReady()))      // second stationary environment
                 return null;
             curFile = null;                             // reset the file object
@@ -213,6 +274,7 @@ public class FLManagerService extends Service {
                     caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
         }
         private boolean chargerReady() {    // need to be under charging
+            Intent batteryStatus = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
             int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
             return status == BatteryManager.BATTERY_STATUS_CHARGING ||
                     status == BatteryManager.BATTERY_STATUS_FULL;
@@ -222,6 +284,7 @@ public class FLManagerService extends Service {
             for (SampleFile file : allList) {
                 if (file.stage == STAGE_RECEIVED) {
                     curFile = file;
+                    Log.d("trainingThread", "will use file: " + curFile.fileName);
                     return file;
                 }
             }
@@ -235,8 +298,11 @@ public class FLManagerService extends Service {
             if (curFile == null) return;
             mDBMgr.markStage(curFile, STAGE_TRAINED);
         }
+        public void markReceived() {
+            if (curFile == null) return;
+            mDBMgr.markStage(curFile, STAGE_RECEIVED);
+        }
         public void clean() {
-            batteryStatus = null;
             mDBMgr = null;
         }
     }
