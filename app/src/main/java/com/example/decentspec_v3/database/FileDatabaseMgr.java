@@ -7,7 +7,8 @@ import androidx.lifecycle.LiveData;
 
 import java.util.List;
 
-// singleton design
+// access wrapper for database singleton
+// because cant execute blocking access in main UI
 public class FileDatabaseMgr {
 
     private static final String TAG = "Database";

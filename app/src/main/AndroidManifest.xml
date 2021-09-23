@@ -5,6 +5,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
 
     <application
         android:allowBackup="true"
@@ -15,11 +19,13 @@
         android:theme="@style/Theme.DecentSpec_v3">
 
         <service
-            android:name=".FLManager"
+            android:name=".FLManagerService"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="true"
+            android:usesCleartextTraffic="true" />
+
         <service
-            android:name=".SerialListener"
+            android:name=".SerialListenerService"
             android:enabled="true"
             android:exported="true"
             android:foregroundServiceType="location" />

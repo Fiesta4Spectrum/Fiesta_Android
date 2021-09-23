@@ -32,7 +32,7 @@ import static com.example.decentspec_v3.Config.*;
 import static com.example.decentspec_v3.database.SampleFile.STAGE_RECEIVED;
 import static com.example.decentspec_v3.IntentDirectory.*;
 
-public class SerialListener extends Service {
+public class SerialListenerService extends Service {
 
     // const
     private String TAG = "SerialListener";
@@ -77,12 +77,12 @@ public class SerialListener extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent.getAction().equals(STOP_ACTION)) {
             Log.d(TAG, "stop the service");
-            changeState(SERIAL_DISC);
             unregisterReceiver(mUSBBroadcastReceiver);
             if (mSampleInstance != null) {
                 mSampleInstance.stop();
                 mSampleInstance = null;
             }
+            changeState(SERIAL_DISC);
             stopForeground(true);
             stopSelf();
         } else {

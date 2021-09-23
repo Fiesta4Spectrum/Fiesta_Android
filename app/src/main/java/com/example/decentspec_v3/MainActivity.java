@@ -27,18 +27,16 @@ import android.widget.Toast;
 import com.example.decentspec_v3.database.DBViewModel;
 import com.example.decentspec_v3.database.SampleFile;
 
-import org.w3c.dom.Text;
-
 import java.util.List;
 
-import static com.example.decentspec_v3.FLManager.FL_COMM;
-import static com.example.decentspec_v3.FLManager.FL_IDLE;
-import static com.example.decentspec_v3.FLManager.FL_TRAIN;
+import static com.example.decentspec_v3.FLManagerService.FL_COMM;
+import static com.example.decentspec_v3.FLManagerService.FL_IDLE;
+import static com.example.decentspec_v3.FLManagerService.FL_TRAIN;
 import static com.example.decentspec_v3.IntentDirectory.*;
-import static com.example.decentspec_v3.SerialListener.SERIAL_DISC;
-import static com.example.decentspec_v3.SerialListener.SERIAL_HANDSHAKE;
-import static com.example.decentspec_v3.SerialListener.SERIAL_IDLE;
-import static com.example.decentspec_v3.SerialListener.SERIAL_SAMPLING;
+import static com.example.decentspec_v3.SerialListenerService.SERIAL_DISC;
+import static com.example.decentspec_v3.SerialListenerService.SERIAL_HANDSHAKE;
+import static com.example.decentspec_v3.SerialListenerService.SERIAL_IDLE;
+import static com.example.decentspec_v3.SerialListenerService.SERIAL_SAMPLING;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -67,10 +65,10 @@ public class MainActivity extends AppCompatActivity {
 
         // initial states read and resource binding
         // get the states of two service and show
-        serial_switch.setChecked(ifMyServiceRunning(SerialListener.class));
-        FL_switch.setChecked(ifMyServiceRunning(FLManager.class));
-        switchRadioFL(SerialListener.getState());
-        switchRadioSerial(FLManager.getState());
+        serial_switch.setChecked(ifMyServiceRunning(SerialListenerService.class));
+        FL_switch.setChecked(ifMyServiceRunning(FLManagerService.class));
+        switchRadioFL(FLManagerService.getState());
+        switchRadioSerial(SerialListenerService.getState());
 
         myDBRV = findViewById(R.id.rv_database);
 
@@ -151,55 +149,50 @@ public class MainActivity extends AppCompatActivity {
         FLRadio.check(radioId);
     }
 
-    @Override
-    protected void onDestroy() {
-
-        super.onDestroy();
-    }
 
     // switch actions
     public void toggleSerialService(View view) {
-        boolean iAmRunning = ifMyServiceRunning(SerialListener.class);
+        boolean iAmRunning = ifMyServiceRunning(SerialListenerService.class);
         if (serial_switch.isChecked()) {
             // start the service request
             if (iAmRunning) {
                 return;
             }
             /*start foreground service*/
-            Intent runMyService = new Intent(this, SerialListener.class);
+            Intent runMyService = new Intent(this, SerialListenerService.class);
             runMyService.setAction(START_ACTION);
             startForegroundService(runMyService);
-            serial_switch.setChecked(ifMyServiceRunning(SerialListener.class));
+            serial_switch.setChecked(ifMyServiceRunning(SerialListenerService.class));
         } else {
             // turn-off service request
             if (! iAmRunning) {
                 return;
             }
             /*stop foreground service*/
-            Intent stopMyService = new Intent(this, SerialListener.class);
+            Intent stopMyService = new Intent(this, SerialListenerService.class);
             stopMyService.setAction(STOP_ACTION);
             startService(stopMyService);
         }
     }
     public void toggleFLService(View view) {
-        boolean iAmRunning = ifMyServiceRunning(FLManager.class);
+        boolean iAmRunning = ifMyServiceRunning(FLManagerService.class);
         if (FL_switch.isChecked()) {
             // start the service request
             if (iAmRunning) {
                 return;
             }
             /*start foreground service*/
-            Intent runMyService = new Intent(this, FLManager.class);
+            Intent runMyService = new Intent(this, FLManagerService.class);
             runMyService.setAction(START_ACTION);
             startForegroundService(runMyService);
-            FL_switch.setChecked(ifMyServiceRunning(FLManager.class));
+            FL_switch.setChecked(ifMyServiceRunning(FLManagerService.class));
         } else {
             // turn-off service request
             if (! iAmRunning) {
                 return;
             }
             /*stop foreground service*/
-            Intent stopMyService = new Intent(this, FLManager.class);
+            Intent stopMyService = new Intent(this, FLManagerService.class);
             stopMyService.setAction(STOP_ACTION);
             startService(stopMyService);
         }

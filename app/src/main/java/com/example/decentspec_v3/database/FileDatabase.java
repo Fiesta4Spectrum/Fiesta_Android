@@ -8,6 +8,7 @@ import androidx.room.RoomDatabase;
 
 import com.example.decentspec_v3.database.FileDatabaseMgr;
 
+// singleton database instance
 @Database(entities = {SampleFile.class}, version = 1, exportSchema = false)
 public abstract class FileDatabase extends RoomDatabase {
     private static FileDatabase INSTANCE = null;
