@@ -29,8 +29,9 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     public RecyclerViewAdapter(Activity context, List<SampleFile> fileArrayList) {
         this.context = context;
-        this.fileArrayList = fileArrayList.subList(0, fileArrayList.size());
-        Collections.reverse(this.fileArrayList);
+//        this.fileArrayList = fileArrayList.subList(0, fileArrayList.size());
+//        Collections.reverse(this.fileArrayList);
+        this.fileArrayList = fileArrayList;
     }
 
     @Override

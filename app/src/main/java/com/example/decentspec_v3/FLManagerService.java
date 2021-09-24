@@ -35,7 +35,6 @@ import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.primitives.Pair;
 import org.nd4j.shade.jackson.core.JsonProcessingException;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.example.decentspec_v3.Config.*;
@@ -110,7 +109,7 @@ public class FLManagerService extends Service {
         myDaemon = new Thread(new Runnable() {
             @Override
             public void run() {
-                mTrainingTrigger.cleanUpDatabase();
+                mTrainingTrigger.validateDatabase();
                 while (!Thread.currentThread().isInterrupted()) {
                     try {
                         SampleFile dataFile = mTrainingTrigger.getDataset();
@@ -123,9 +122,9 @@ public class FLManagerService extends Service {
                         }
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        Log.d(TAG, "interrupted during sleep");
+//                        Log.d(TAG, "interrupted during sleep");
                         cleanup();
-                        return;
+                        break;
                     }
                 }
                 cleanup();
@@ -197,6 +196,7 @@ public class FLManagerService extends Service {
                         if (i == mTrainingPara.EPOCH_NUM - 1)
                             end_loss = mySL.getScore();
                     } catch (RuntimeException e) {
+                        Thread.currentThread().interrupt();
                         mTrainingTrigger.markReceived(); // roll back database
                         cleanup();
                         return; // early return due to interrupt
@@ -231,7 +231,6 @@ public class FLManagerService extends Service {
 
             private void cleanup() { // call when interrupted
                 changeState(FL_IDLE);
-
                 // seems no specific things need to do
             }
 
@@ -239,8 +238,9 @@ public class FLManagerService extends Service {
         myDaemon.start();
     }
     private void stopTheWork() {
-        if (myDaemon.isAlive())
+        if (myDaemon.isAlive()) {
             myDaemon.interrupt();
+        }
         /* clean up here */
     }
 
@@ -254,7 +254,7 @@ public class FLManagerService extends Service {
             mDBMgr = new FileDatabaseMgr(context);
             mConnMgr = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         }
-        public void cleanUpDatabase() {
+        public void validateDatabase() {
             List<SampleFile> allList = mDBMgr.getFileList(); // it is not in main thread so its fine
             for (SampleFile file : allList) {
                 if (file.stage == STAGE_TRAINING) {

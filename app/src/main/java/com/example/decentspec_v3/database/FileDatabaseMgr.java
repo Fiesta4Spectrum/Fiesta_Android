@@ -31,7 +31,7 @@ public class FileDatabaseMgr {
 
     public SampleFile createEntry(String fileName) {
         SampleFile newSampleFile = new SampleFile(fileName);
-        Log.d(TAG, "insert: " + newSampleFile.toString());
+//        Log.d(TAG, "insert: " + newSampleFile.toString());
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -43,7 +43,7 @@ public class FileDatabaseMgr {
 
     public void markStage(SampleFile file, int stage) {
         file.stage = stage;
-        Log.d(TAG, "update: " + file.toString());
+//        Log.d(TAG, "update: " + file.toString());
         new Thread(new Runnable() {
             @Override
             public void run() {
