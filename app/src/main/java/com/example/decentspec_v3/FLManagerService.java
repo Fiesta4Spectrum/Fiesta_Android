@@ -32,6 +32,7 @@ import org.deeplearning4j.datasets.iterator.FloatsDataSetIterator;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.json.JSONException;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
+import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.primitives.Pair;
 import org.nd4j.shade.jackson.core.JsonProcessingException;
 
@@ -71,6 +72,7 @@ public class FLManagerService extends Service {
     private TrainingTrigger mTrainingTrigger;
 
     public FLManagerService() {
+
     }
 
     @Override
@@ -117,9 +119,8 @@ public class FLManagerService extends Service {
                             /* use this file to make a local train */
                             oneLocalTraining(dataFile);
                             // end of one time training
-                        } else {
-                            Thread.sleep(ML_TASK_INTERVAL); // save time through check the env per interval
                         }
+                        Thread.sleep(ML_TASK_INTERVAL); // save time through check the env per interval
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
 //                        Log.d(TAG, "interrupted during sleep");
@@ -155,8 +156,7 @@ public class FLManagerService extends Service {
                 }
                 FileAccessor mFileAccessor = new FileAccessor(context);                 // io entity
                 // TODO use the real file data
-                // List<Pair<float[], float[]>> localTrainList = mFileAccessor.readFrom(file.fileName, mTrainingPara);
-                List<Pair<float[], float[]>> localTrainList = mFileAccessor.readFrom(DUMMY_FILENAME, mTrainingPara);
+                List<Pair<float[], float[]>> localTrainList = mFileAccessor.readFrom(file.fileName, mTrainingPara);
                 if (localTrainList == null || localTrainList.size() == 0) {
                     Log.d(TAG, "file not available");
                     cleanup();
@@ -178,11 +178,13 @@ public class FLManagerService extends Service {
                 double end_loss = 0.0;
 
                 mTrainingTrigger.markTraining();
+                if (ENABLE_GC_FREQ_LIMIT)
+                    Nd4j.getMemoryManager().setAutoGcWindow(5000);
                 for (int i = 0; i < mTrainingPara.EPOCH_NUM; i++) {
                     try {
                         // check interrupt signal between epochs
                         if (Thread.currentThread().isInterrupted()) {
-                            mTrainingTrigger.markReceived(); // roll back database
+                            mTrainingTrigger.rollBack(); // roll back database
                             cleanup();
                             return; // early return due to interrupt
                         }
@@ -195,9 +197,10 @@ public class FLManagerService extends Service {
                             init_loss = mySL.getScore(); // TODO this is not accurate, a score after one epoch training.
                         if (i == mTrainingPara.EPOCH_NUM - 1)
                             end_loss = mySL.getScore();
+                        mTrainingTrigger.progressOn();
                     } catch (RuntimeException e) {
                         Thread.currentThread().interrupt();
-                        mTrainingTrigger.markReceived(); // roll back database
+                        mTrainingTrigger.rollBack(); // roll back database
                         cleanup();
                         return; // early return due to interrupt
                     }
@@ -215,7 +218,7 @@ public class FLManagerService extends Service {
                             break;
                         if (i == mTrainingPara.MINER_LIST.size() - 1) {
                             Log.d(TAG, "[updateLocal] miner node no connection");
-                            mTrainingTrigger.markReceived(); // roll back
+                            mTrainingTrigger.rollBack(); // roll back
                             cleanup();
                             return;
                         }
@@ -259,6 +262,7 @@ public class FLManagerService extends Service {
             for (SampleFile file : allList) {
                 if (file.stage == STAGE_TRAINING) {
                     mDBMgr.markStage(file, STAGE_RECEIVED);
+                    mDBMgr.progressRst(file);
                 }
             }
         }
@@ -303,9 +307,14 @@ public class FLManagerService extends Service {
             if (curFile == null) return;
             mDBMgr.markStage(curFile, STAGE_TRAINED);
         }
-        public void markReceived() {
+        public void rollBack() {
             if (curFile == null) return;
             mDBMgr.markStage(curFile, STAGE_RECEIVED);
+            mDBMgr.progressRst(curFile);
+        }
+        public void progressOn() {
+            if (curFile == null) return;
+            mDBMgr.progressOn(curFile);
         }
     }
 

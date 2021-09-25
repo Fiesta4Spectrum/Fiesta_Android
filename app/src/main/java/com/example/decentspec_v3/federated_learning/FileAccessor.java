@@ -3,6 +3,7 @@ package com.example.decentspec_v3.federated_learning;
 import android.content.Context;
 import android.util.Log;
 
+import com.example.decentspec_v3.R;
 import com.example.decentspec_v3.database.FileDatabase;
 
 
@@ -10,6 +11,7 @@ import org.nd4j.linalg.primitives.Pair;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +30,11 @@ public class FileAccessor {
         int OUT_SIZE = tp.MODEL_STRUCTURE.get(tp.MODEL_STRUCTURE.size() - 1);
         List<Pair<float[],float[]>> trainList = new ArrayList<>();
         try {
-            FileInputStream fin = context.openFileInput(fileName);
+            InputStream fin;
+            if (USE_DUMMY_DATASET) {
+                fin = context.getResources().openRawResource(R.raw.gps_power);
+            } else
+                fin = context.openFileInput(fileName);
             if (fin != null) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(fin));
                 String line;

@@ -24,13 +24,17 @@ public class SampleFile {
     @ColumnInfo(name = "stage")
     public int stage;
 
+    @ColumnInfo(name = "progress")
+    public int progress;
+
     public SampleFile(String fileName) {
         this.fileName = String.valueOf(fileName);
         this.stage = STAGE_RECEIVING;
+        this.progress = 0;
     }
 
     @Override
     public String toString() {
-        return "id: " + id + " | filename: " + fileName + " | stage: " + stage;
+        return "id: " + id + " | filename: " + fileName + " | stage: " + stage + " | progress: " + progress;
     }
 }

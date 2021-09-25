@@ -10,17 +10,28 @@
         android:id="@+id/col1"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="File Name Here"
-        android:gravity="center"
-        android:layout_weight="0.65"
+        android:text="demo_0000000000.txt"
+        android:paddingLeft="8dp"
+        android:gravity="left"
+        android:layout_weight="0.5"
         android:textSize="12sp" />
 
     <TextView
         android:id="@+id/col2"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="File Stage"
-        android:gravity="center"
-        android:layout_weight="0.35"
+        android:text="Training ..."
+        android:gravity="left"
+        android:layout_weight="0.24"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/col3"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="█ █ █ █ █"
+        android:paddingLeft="4dp"
+        android:gravity="left"
+        android:layout_weight="0.26"
         android:textSize="12sp" />
 </LinearLayout>

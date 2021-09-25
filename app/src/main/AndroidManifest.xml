@@ -17,7 +17,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.DecentSpec_v3"
-        android:usesCleartextTraffic="true" >
+        android:usesCleartextTraffic="true"
+        android:largeHeap="true" >
 
         <service
             android:name=".FLManagerService"

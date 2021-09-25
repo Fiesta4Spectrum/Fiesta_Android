@@ -48,6 +48,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
         viewHolder.nameText.setText(file.fileName);
         viewHolder.stageText.setText(stage2String(file.stage));
+        viewHolder.progressBar.setText(int2Bar(file.progress));
     }
 
     @Override
@@ -58,11 +59,13 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     class RecyclerViewViewHolder extends RecyclerView.ViewHolder {
         TextView nameText;
         TextView stageText;
+        TextView progressBar;
 
         public RecyclerViewViewHolder(View itemView) {
             super(itemView);
             nameText = itemView.findViewById(R.id.col1);
             stageText = itemView.findViewById(R.id.col2);
+            progressBar = itemView.findViewById(R.id.col3);
         }
     }
 
@@ -75,5 +78,12 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             case STAGE_TRAINED: return "Trained";
             default: return "unknown: " + stage;
         }
+    }
+    private String int2Bar(int value) {
+        StringBuilder sb = new StringBuilder(20);
+        for (int i = 0; i < value; i++) {
+            sb.append("█ ");
+        }
+        return sb.toString();
     }
 }

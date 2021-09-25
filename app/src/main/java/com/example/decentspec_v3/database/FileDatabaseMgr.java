@@ -1,11 +1,12 @@
 package com.example.decentspec_v3.database;
 
 import android.content.Context;
-import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 
 import java.util.List;
+
+import static com.example.decentspec_v3.Config.*;
 
 // access wrapper for database singleton
 // because cant execute blocking access in main UI
@@ -44,6 +45,35 @@ public class FileDatabaseMgr {
     public void markStage(SampleFile file, int stage) {
         file.stage = stage;
 //        Log.d(TAG, "update: " + file.toString());
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                dao.update(file);  //simple update seems not working
+            }
+        }).start();
+    }
+    public void progressOn(SampleFile file) {
+        if (file.progress < MAX_PROGRESS_BAR) {
+            file.progress ++;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    dao.update(file);  //simple update seems not working
+                }
+            }).start();
+        }
+    }
+    public void progressRst(SampleFile file) {
+        file.progress = 0;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                dao.update(file);  //simple update seems not working
+            }
+        }).start();
+    }
+    public void progressMax(SampleFile file) {
+        file.progress = MAX_PROGRESS_BAR;
         new Thread(new Runnable() {
             @Override
             public void run() {
