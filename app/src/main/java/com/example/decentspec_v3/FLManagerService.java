@@ -284,7 +284,7 @@ public class FLManagerService extends Service {
                 }
             }
             changeState(FL_IDLE);
-            if (mHTTPAccessor == null)
+            if (mTrainingPara == null)
                 return null;
             if (! newGlobalSniffed(mTrainingPara)) {
                 Log.d(TAG, "[fetchGlobal] there is no update on the global model");

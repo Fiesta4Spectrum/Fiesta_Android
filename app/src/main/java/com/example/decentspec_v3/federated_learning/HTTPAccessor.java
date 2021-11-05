@@ -147,6 +147,7 @@ public class HTTPAccessor {
         jsonBody.put("timestamp", MyUtils.genTimestamp());
         jsonBody.put("plz_spread", 1);
         final String requestBody = jsonBody.toString();
+        Log.d("HTTP", "[upload global] " + requestBody);
 
         StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
                 new Response.Listener<String>() {
