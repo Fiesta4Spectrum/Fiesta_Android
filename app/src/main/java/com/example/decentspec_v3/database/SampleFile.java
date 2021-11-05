@@ -37,4 +37,10 @@ public class SampleFile {
     public String toString() {
         return "id: " + id + " | filename: " + fileName + " | stage: " + stage + " | progress: " + progress;
     }
+
+    public static SampleFile getDummyFile() {
+        SampleFile ret = new SampleFile("DummyFile");
+        ret.stage = STAGE_RECEIVED;
+        return ret;
+    }
 }

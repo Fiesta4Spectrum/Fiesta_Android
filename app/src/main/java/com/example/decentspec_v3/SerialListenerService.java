@@ -214,7 +214,7 @@ public class SerialListenerService extends Service {
             if (myPort == null) {
                 stop();
             } else {
-                handshake(); // send out handshake signal
+                handShake(); // send out handshake signal
                 startRead(); // start reading data
             }
         }
@@ -245,7 +245,7 @@ public class SerialListenerService extends Service {
             return  port;
         }
 
-        private void handshake() {
+        private void handShake() {
             // currently didn't implement
             changeState(SERIAL_HANDSHAKE);
         }

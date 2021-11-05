@@ -22,7 +22,7 @@ public class ScoreListener extends BaseTrainingListener implements Serializable 
         // TODO may not be so accurate, need code review
         int iter_in_epoch = iteration % (para.DATASET_SIZE / para.BATCH_SIZE);
         score_avg = (score_avg * iter_in_epoch + model.score()) / (iter_in_epoch+1);
-        if  (iter_in_epoch % 200 == 0)
+        if  (iter_in_epoch == para.DATASET_SIZE / para.BATCH_SIZE - 1 )
             Log.d("startTraining", String.valueOf(iter_in_epoch) + " : " + String.valueOf(epoch) + " : " + String.valueOf(score_avg));
     }
 

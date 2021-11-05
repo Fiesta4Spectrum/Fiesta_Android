@@ -59,7 +59,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // init route
         GlobalPrefMgr.init(this);
+        if (Config.USE_DUMMY_DATASET) {
+            GlobalPrefMgr.setField(GlobalPrefMgr.TASK, "null");
+            GlobalPrefMgr.setField(GlobalPrefMgr.BASE_GEN, -1);
+        }
 
         serial_switch = findViewById(R.id.serial_switch);
         FL_switch = findViewById(R.id.FL_switch);
@@ -121,6 +126,17 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }, new IntentFilter(FL_STATE_FILTER)
         );
+        // update task and version
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        String task = GlobalPrefMgr.getFieldString(GlobalPrefMgr.TASK);
+                        int version = GlobalPrefMgr.getFieldInt(GlobalPrefMgr.BASE_GEN);
+                        TextView taskName = findViewById(R.id.TaskAndVer);
+                        taskName.setText(task + " @ " + version);
+                    }
+                }, new IntentFilter(FL_TASK_FILTER));
 
         // first time app setup
         TextView device_id = findViewById(R.id.device_id);

@@ -26,9 +26,12 @@ public class TrainingPara {
     // std paras
     public List<Float> DATASET_AVG;
     public List<Float>  DATASET_STD;
+
     public Integer DATASET_SIZE;
     public String DATASET_NAME;
     public ArrayList<String> MINER_LIST;
+    public Integer BASE_GENERATION;
+    public String SEED_NAME;
 
     public MultiLayerNetwork buildModel() {
         return new MultiLayerNetwork(LayerConfigBuilder(MODEL_STRUCTURE));

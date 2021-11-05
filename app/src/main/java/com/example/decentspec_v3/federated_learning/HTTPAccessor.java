@@ -10,6 +10,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.decentspec_v3.Config;
 import com.example.decentspec_v3.GlobalPrefMgr;
 import com.example.decentspec_v3.MyUtils;
 
@@ -69,6 +70,7 @@ public class HTTPAccessor {
         join();
         return responded;
     }
+
     public boolean getLatestGlobal(String serverAddr, TrainingPara tp) {
         threadDone = false;
         responded = false;
@@ -89,6 +91,8 @@ public class HTTPAccessor {
                             tp.LEARNING_RATE = train_json.getDouble("lr");
                             tp.EPOCH_NUM = train_json.getInt("epoch");
                             tp.MODEL_STRUCTURE = HelperMethods.JSONArray2IntList(jsonRsp.getJSONArray("layerStructure"));
+                            tp.BASE_GENERATION = jsonRsp.getInt("generation");
+                            tp.SEED_NAME = jsonRsp.getString("seed_name");
                         } catch (JSONException | JsonProcessingException e) {
                             e.printStackTrace();
                         }
@@ -108,7 +112,8 @@ public class HTTPAccessor {
         join();
         return responded;
     }
-    public boolean sendTrainedLocal(String serverAddr, int size, double delta_loss, JSONObject localWeight) throws JSONException {
+
+    public boolean sendTrainedLocal(String serverAddr, int size, double delta_loss, int base_gen, JSONObject localWeight) throws JSONException {
             /*
                 MLdata = {
                     'stat' : {  'size' : size,
@@ -133,6 +138,7 @@ public class HTTPAccessor {
         MLData_stat.put("lossDelta", delta_loss);
         MLData.put("stat", MLData_stat);
         MLData.put("weight", localWeight);
+        MLData.put("base_gen", base_gen);
 
         JSONObject jsonBody = new JSONObject();
         jsonBody.put("author", GlobalPrefMgr.getName());
