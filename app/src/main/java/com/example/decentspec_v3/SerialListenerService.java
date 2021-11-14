@@ -26,16 +26,19 @@ import com.hoho.android.usbserial.util.SerialInputOutputManager;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.example.decentspec_v3.Config.*;
-import static com.example.decentspec_v3.database.SampleFile.STAGE_RECEIVED;
 import static com.example.decentspec_v3.IntentDirectory.*;
 
 public class SerialListenerService extends Service {
 
     // const
-    private String TAG = "SerialListener";
+    private final String TAG = "SerialListener";
+    private final int SERIAL_WRITE_TIMEOUT = 1000;
+
     // service states
     public static final int SERIAL_DISC = 0;
     public static final int SERIAL_HANDSHAKE = 1;
@@ -66,7 +69,9 @@ public class SerialListenerService extends Service {
 
     // sample database related
     private OneTimeSample mSampleInstance = null;
-    private FileDatabaseMgr myDBMgr = null;
+    private WriteStreamMgr mWriteStreamMgr = null;
+    private FileDatabaseMgr mDBMgr = null;
+    private int switchCounter = 0;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -96,7 +101,8 @@ public class SerialListenerService extends Service {
             changeState(SERIAL_DISC);
             mNotificationBuilder = genForegroundNotification();
             startForeground(NOTI_ID, mNotificationBuilder.build());
-            myDBMgr = new FileDatabaseMgr(this);
+            mDBMgr = new FileDatabaseMgr(this);
+            mWriteStreamMgr = new WriteStreamMgr();
             setupUSBReceiver();
             mGPSTracker = new GPSTracker(this);
             if (! mGPSTracker.isAvail())
@@ -200,13 +206,12 @@ public class SerialListenerService extends Service {
         // 0       1            2           3
 
         private static final String TAG = "OneTimeSample";
-        private UsbDevice myDevice; // actually it is not used, because we use the first device as default
-        private UsbSerialPort myPort;
+        private final UsbDevice myDevice; // actually it is not used, because we use the first device as default
+        private final UsbSerialPort myPort;
         private SerialInputOutputManager mySerialIOMgr; // a stand alone runnable monitor the input
-        private FileOutputStream myWriteStream = null;
-        private SampleFile mySampleFileEntry = null;
+        private SampleReconfiger mySampleReconfiger;
 
-        public OneTimeSample(UsbDevice device) {
+        public OneTimeSample(UsbDevice device) {    // max sample length 10s
 //            appToast("start one sample");
             myState = SERIAL_DISC;
             myDevice = device;
@@ -214,8 +219,12 @@ public class SerialListenerService extends Service {
             if (myPort == null) {
                 stop();
             } else {
-                handShake(); // send out handshake signal
-                startRead(); // start reading data
+                // try to gather data first
+                startRead(); // setup reading data thread
+                // reconfig the board after a while
+                if (SAMPLE_RECONFIG)
+                    mySampleReconfiger = new SampleReconfiger(switchCounter);
+                switchCounter = (switchCounter + 1) % SAMPLE_RANGE_NUM;
             }
         }
 
@@ -245,19 +254,10 @@ public class SerialListenerService extends Service {
             return  port;
         }
 
-        private void handShake() {
-            // currently didn't implement
-            changeState(SERIAL_HANDSHAKE);
-        }
-
         private void startRead() {
-            /* create file */
-            try {
-                String filename = "demo_" + MyUtils.genTimestamp() + ".txt";
-                myWriteStream = openFileOutput(filename, Context.MODE_PRIVATE);
-                mySampleFileEntry = myDBMgr.createEntry(filename);
-            } catch (IOException e) {
-                Log.d(TAG, "unable to create file");
+            /* open target file */
+            if (mWriteStreamMgr == null || ! mWriteStreamMgr.start()) {
+                Log.d(TAG, "unable to open file list");
                 stop();
             }
             /* set up GPS listener thread */
@@ -270,13 +270,8 @@ public class SerialListenerService extends Service {
 
         @Override
         public void onNewData(byte[] data) {        // running on the SerialIOMgr thread
-            try {
-                if (myWriteStream != null) {
-                    myWriteStream.write("|------------|".getBytes()); // add a divider to judge the size of the buffer
-                    myWriteStream.write(data);
-                }
-            } catch (IOException e) {
-                Log.d(TAG, "fail to write into the file");
+            if (mWriteStreamMgr != null) {
+                mWriteStreamMgr.record(data);
             }
         }
 
@@ -285,8 +280,44 @@ public class SerialListenerService extends Service {
             Log.d(TAG, "Serial io error");
         }
 
+        private class SampleReconfiger {
+            private final String TAG = "serialReconfig";
+            // it will only reconfig only once, because board will reboot then serial disconnect
+            private final Thread myThread;
+            public SampleReconfiger(int configIndex) {
+                myThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(SAMPLE_SWITCH_INTERVAL);
+                        } catch (InterruptedException e) {
+                            Log.d(TAG, "Auto reconfigure quit");
+                            return;
+                        }
+                        try {
+                            myPort.write(MyUtils.genConfigData(configIndex).getBytes(), SERIAL_WRITE_TIMEOUT);
+                        } catch (IOException e) {
+                            Log.d(TAG, "unable to write to serial");
+                            e.printStackTrace();
+                        }
+                    }
+                });
+                myThread.start();
+            }
+            public void stop() {
+                if (myThread.isAlive()) {
+                    myThread.interrupt();
+                }
+            }
+        }
+
         public void stop() {
-            /* close serial port*/
+            /* close sample reconfiger */
+            if (mySampleReconfiger != null) {
+                mySampleReconfiger.stop();
+                mySampleReconfiger = null;
+            }
+            /* close serial port */
             try {
                 if (myPort != null)
                     myPort.close();
@@ -298,24 +329,108 @@ public class SerialListenerService extends Service {
                 mySerialIOMgr.stop();
                 mySerialIOMgr = null;
             }
-            /* terminate GPS listener */
+            /* pause GPS listener */
             mGPSTracker.cleanGPSListener();
-            /* save file */
-            try {
-                if (myWriteStream != null) {
-                    myWriteStream.close();
-                    myWriteStream = null;
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            /* update database */
-            if (mySampleFileEntry != null) {
-                myDBMgr.markStage(mySampleFileEntry, STAGE_RECEIVED);
-                mySampleFileEntry = null;
+            /* pause writer thread */
+            if (mWriteStreamMgr != null) {
+                mWriteStreamMgr.stop();
             }
             changeState(SERIAL_IDLE);
 //            appToast("sample is finished");
+        }
+    }
+
+    private class WriteStreamMgr {
+        private final String TAG = "DataFileWriter";
+        private ArrayList<String> myFileNames;
+        private String longBuffer = "";
+        private final Object bufferLock = new Object();
+        private final Runnable writerTemplate;
+        private Thread writerThread;
+
+        public WriteStreamMgr() {
+            writerTemplate = new Runnable() {
+                @Override
+                public void run() {
+                    while (!Thread.currentThread().isInterrupted()) {
+                        String new_line = null;
+                        synchronized (bufferLock) {
+                            int startIndex = longBuffer.indexOf(SAMPLE_START_SIGNAL);
+                            int endIndex = longBuffer.indexOf(SAMPLE_END_SIGNAL);
+                            if (startIndex >= 0 && endIndex > 0) {   // if both exist
+                                new_line = longBuffer.substring(startIndex, endIndex);
+                                longBuffer = longBuffer.substring(endIndex);
+                            }
+                        }
+                        if (new_line != null)
+                            writeIntoFile(new_line);
+                    }
+                }
+                // because the consuming speed of buffer is much faster than the serial speed
+                // we could add the gps and timestamp only when we store the data into file
+                public void writeIntoFile(String content) {
+                    double[] gps = mGPSTracker.getCurLocation();
+                    long time = MyUtils.genTimestamp();
+                    String[] elements = content.replace(SAMPLE_START_SIGNAL, "")
+                                                .replace(SAMPLE_END_SIGNAL, "")
+                                                .split("\\s+");
+                    int centerFreq = Integer.parseInt(elements[0]);
+                    int bandwidth = Integer.parseInt(elements[1]);
+                    String[] PSD = Arrays.copyOfRange(elements, 2, elements.length);
+                    if (PSD.length != SAMPLE_BIN_NUM) {
+                        Log.d(TAG, "incorrect serial input format!");
+                        return;
+                    }
+                    String newLine = String.format("%f %f %d %s\n", gps[0], gps[1], time, String.join(" ", PSD));
+                    String targetFileName = MyUtils.genFileName(centerFreq, bandwidth);
+                    List<SampleFile> currentFiles = mDBMgr.getFileList();
+                    SampleFile targetFile = null;
+                    for (SampleFile file : currentFiles) {
+                        if (file.fileName.equals(targetFileName)) {
+                            targetFile = file;
+                        }
+                    }
+                    if (targetFile == null) {
+                        targetFile = mDBMgr.createEntry(targetFileName);
+                    }
+                    mDBMgr.markStage(targetFile, SampleFile.STAGE_RECEIVING);
+                    try {
+                        FileOutputStream myOutputStream = openFileOutput(targetFileName, Context.MODE_APPEND);
+                        myOutputStream.write(newLine.getBytes());
+                        myOutputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    mDBMgr.markStage(targetFile, SampleFile.STAGE_RECEIVED);
+                }
+            };
+        }
+        public void record(byte[] content) {
+            synchronized (bufferLock) {
+                String rawString = new String(content);
+                longBuffer += rawString;
+            }
+        }
+        public boolean start() {
+            if (writerThread != null && writerThread.isAlive()) {
+                flushBuffer();
+                return true;
+            }
+            writerThread = new Thread(writerTemplate);
+            writerThread.start();
+            return true;
+        }
+        public boolean stop() {
+            if (writerThread == null) {
+                return false;
+            }
+            writerThread.interrupt();
+            return writerThread.isInterrupted();
+        }
+        public void flushBuffer() {
+            synchronized (bufferLock) {
+                longBuffer = "";
+            }
         }
     }
 
@@ -344,15 +459,14 @@ public class SerialListenerService extends Service {
         channel.setDescription(CHANNEL_DESC);
         mNotificationMgr.createNotificationChannel(channel);
         // create a notification in this channel
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+
+        return new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.serial)
                 .setContentTitle(NOTI_TITLE)
                 .setContentText(NOTI_TEXT_DISCONN)
                 .setTicker(NOTI_TICKER)
                 .setContentIntent(pendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
-
-        return builder;
     }
 
     public static int getState() {

@@ -32,6 +32,8 @@ public class TrainingPara {
     public ArrayList<String> MINER_LIST;
     public Integer BASE_GENERATION;
     public String SEED_NAME;
+    public Integer SAMPLE_CENTER_FREQ;
+    public Integer SAMPLE_BANDWIDTH;
 
     public MultiLayerNetwork buildModel() {
         return new MultiLayerNetwork(LayerConfigBuilder(MODEL_STRUCTURE));

@@ -72,15 +72,6 @@ public class FileDatabaseMgr {
             }
         }).start();
     }
-    public void progressMax(SampleFile file) {
-        file.progress = MAX_PROGRESS_BAR;
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                dao.update(file);  //simple update seems not working
-            }
-        }).start();
-    }
     public void deleteEntry(SampleFile file) {
         new Thread(new Runnable() {
             @Override

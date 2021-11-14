@@ -60,6 +60,10 @@ public class GPSTracker {
         return true;
     }
 
+    public double[] getCurLocation() {
+        return new double[]{curLocation.getLatitude(), curLocation.getLongitude()};
+    }
+
     public void broadcastGPS() {
         Intent intent;
         if (curLocation == null)

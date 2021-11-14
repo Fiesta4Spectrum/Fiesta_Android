@@ -105,8 +105,6 @@ public class FLManagerService extends Service {
         return START_NOT_STICKY;
     }
 
-    private volatile boolean running = true;
-
     private void doTheWork() {
         /* find the cached data in local storage*/
         mTrainingTrigger = new TrainingTrigger();
@@ -114,16 +112,16 @@ public class FLManagerService extends Service {
         myDaemon = new Thread(new Runnable() {
             @Override
             public void run() {
-                mTrainingTrigger.reformatDatabase();
+                mTrainingTrigger.flushDatabase();
                 while (!Thread.currentThread().isInterrupted()) {
                     try {
-                        // LOCAL ready: wifi, battery, and local files
-                        SampleFile dataFileList = mTrainingTrigger.getDataset(); // TODO change it to file list instead fo a single file
                         // REMOTE ready: new global available
                         TrainingPara mTPara = mTrainingTrigger.getNewGlobal();
-                        if (dataFileList != null && mTPara != null) {
+                        // LOCAL ready: wifi, battery, and local files
+                        SampleFile dataFile = mTrainingTrigger.getDataset(mTPara); // TODO change it to file list instead fo a single file
+                        if (dataFile != null && mTPara != null) {
                             /* use this file to make a local train */
-                            oneLocalTraining(dataFileList, mTPara);
+                            oneLocalTraining(dataFile, mTPara);
                             // end of one time training
                         }
                         Thread.sleep(ML_TASK_INTERVAL); // save time through check the env per interval
@@ -136,7 +134,6 @@ public class FLManagerService extends Service {
                 }
                 cleanup();
                 // end due to external interrupt
-                return;
             }
 
             // TODO add more fine interrupt check
@@ -217,7 +214,6 @@ public class FLManagerService extends Service {
                 mTrainingTrigger.markTrained();
                 // end of ML cycle =================================================================
                 cleanup();
-                return;
             }
 
             private void cleanup() { // call when interrupted
@@ -237,24 +233,22 @@ public class FLManagerService extends Service {
 
     private class TrainingTrigger {
 
-        private FileDatabaseMgr mDBMgr;
-        private ConnectivityManager mConnMgr;
-        private SampleFile targetFileList;
+        private final FileDatabaseMgr mDBMgr;
+        private final ConnectivityManager mConnMgr;
+        private SampleFile targetFile;
 
         public TrainingTrigger() {
             mDBMgr = new FileDatabaseMgr(context);
             mConnMgr = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         }
-        public void reformatDatabase() {
+        public void flushDatabase() {
             List<SampleFile> allList = mDBMgr.getFileList(); // it is not in main thread so its fine
             for (SampleFile file : allList) {
-                if (file.stage == STAGE_TRAINING) {
-                    mDBMgr.markStage(file, STAGE_RECEIVED);
-                    mDBMgr.progressRst(file);
-                }
+                mDBMgr.markStage(file, STAGE_RECEIVED);
+                mDBMgr.progressRst(file);
             }
         }
-        public SampleFile getDataset() {
+        public SampleFile getDataset(TrainingPara tp) {
             if (! (myState == FL_IDLE)) {                // first no other training going on
                 Log.d(TAG, "I am not idle, why you ask me train more");
                 return null;
@@ -263,7 +257,7 @@ public class FLManagerService extends Service {
                                             ", charging: " + chargerReady());
             if (! (wifiReady() && chargerReady()))      // second stationary environment
                 return null;
-            return dataReady();                         // third, available database
+            return dataReady(tp);                         // third, available database
         }
         public TrainingPara getNewGlobal() {
             // fetching knowledge
@@ -273,7 +267,7 @@ public class FLManagerService extends Service {
                 Log.d(TAG, "[fetchGlobal] seed node no connection");
                 changeState(FL_IDLE);
                 return null;
-            };
+            }
             for (int i = 0; i < mTrainingPara.MINER_LIST.size(); i++) {             // get ML context
                 if (mHTTPAccessor.getLatestGlobal(mTrainingPara.MINER_LIST.get(i), mTrainingPara))
                     break;
@@ -284,8 +278,6 @@ public class FLManagerService extends Service {
                 }
             }
             changeState(FL_IDLE);
-            if (mTrainingPara == null)
-                return null;
             if (! newGlobalSniffed(mTrainingPara)) {
                 Log.d(TAG, "[fetchGlobal] there is no update on the global model");
                 return null;
@@ -299,10 +291,14 @@ public class FLManagerService extends Service {
         }
         // private components:
         private boolean newGlobalSniffed(TrainingPara mtp) {
-            if (! NEW_GLOBAL_NEEDED)
+            if (!NEW_GLOBAL_REQUIRED)
                 return true;
             String oldTask = GlobalPrefMgr.getFieldString(GlobalPrefMgr.TASK);
-            int oldVersion = GlobalPrefMgr.getFieldInt(GlobalPrefMgr.BASE_GEN);
+            if (oldTask == null)
+                oldTask = "null";
+            Integer oldVersion = GlobalPrefMgr.getFieldInt(GlobalPrefMgr.BASE_GEN);
+            if (oldVersion == null)
+                oldVersion = -1;
             String newTask = mtp.SEED_NAME;
             int newVersion = mtp.BASE_GENERATION;
             if (! oldTask.equals(newTask))
@@ -324,38 +320,41 @@ public class FLManagerService extends Service {
             return status == BatteryManager.BATTERY_STATUS_CHARGING ||
                     status == BatteryManager.BATTERY_STATUS_FULL;
         }
-        private SampleFile dataReady() {        // need a usable training data
-            // TODO change this to a list of file instead of a single file
+        private SampleFile dataReady(TrainingPara tp) {        // need a usable training data
             // clear the history train data file list
-            targetFileList = null;
+            targetFile = null;
             if (USE_DUMMY_DATASET)
                 return SampleFile.getDummyFile();   // use R.raw.gps_power
             List<SampleFile> allList = mDBMgr.getFileList(); // it is not in main thread so its fine
             for (SampleFile file : allList) {
-                if (file.stage == STAGE_RECEIVED) {
-                    targetFileList = file;
-                    Log.d(TAG, "will use file: " + targetFileList.fileName);
+                if (rightSampleRange(file, tp)) {
+                    targetFile = file;
+                    Log.d(TAG, "will use file: " + targetFile.fileName);
                     return file;
                 }
             }
             return null;
         }
+        public boolean rightSampleRange(SampleFile file, TrainingPara tp) {
+            String expectingFileName = MyUtils.genFileName(tp.SAMPLE_CENTER_FREQ, tp.SAMPLE_BANDWIDTH);
+            return expectingFileName.equals(file.fileName);
+        }
         public void markTraining() {
-            if (targetFileList == null) return;
-            mDBMgr.markStage(targetFileList, STAGE_TRAINING);
+            if (targetFile == null) return;
+            mDBMgr.markStage(targetFile, STAGE_TRAINING);
         }
         public void markTrained() {
-            if (targetFileList == null) return;
-            mDBMgr.markStage(targetFileList, STAGE_TRAINED);
+            if (targetFile == null) return;
+            mDBMgr.markStage(targetFile, STAGE_TRAINED);
         }
         public void rollBack() {
-            if (targetFileList == null) return;
-            mDBMgr.markStage(targetFileList, STAGE_RECEIVED);
-            mDBMgr.progressRst(targetFileList);
+            if (targetFile == null) return;
+            mDBMgr.markStage(targetFile, STAGE_RECEIVED);
+            mDBMgr.progressRst(targetFile);
         }
         public void progressOn() {
-            if (targetFileList == null) return;
-            mDBMgr.progressOn(targetFileList);
+            if (targetFile == null) return;
+            mDBMgr.progressOn(targetFile);
         }
     }
 

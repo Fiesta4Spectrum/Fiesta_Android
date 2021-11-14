@@ -80,16 +80,24 @@ public class HTTPAccessor {
                     public void onResponse(String response) {
                         try {
                             JSONObject jsonRsp = new JSONObject(response);
+
                             JSONObject weight_json = jsonRsp.getJSONObject("weight");
                             tp.GLOBAL_WEIGHT = HelperMethods.stateDict2paramTable(weight_json);
+
                             JSONObject preproc_json = jsonRsp.getJSONObject("preprocPara");
                             tp.DATASET_AVG = HelperMethods.JSONArray2FloatList(preproc_json.getJSONArray("avg"));
                             tp.DATASET_STD = HelperMethods.JSONArray2FloatList(preproc_json.getJSONArray("std"));
+
                             JSONObject train_json = jsonRsp.getJSONObject("trainPara");
                             // TODO package train paras into a struct object
                             tp.BATCH_SIZE = train_json.getInt("batch");
                             tp.LEARNING_RATE = train_json.getDouble("lr");
                             tp.EPOCH_NUM = train_json.getInt("epoch");
+
+                            JSONObject sample_json = jsonRsp.getJSONObject("samplePara");
+                            tp.SAMPLE_CENTER_FREQ = sample_json.getInt("center_freq");
+                            tp.SAMPLE_BANDWIDTH = sample_json.getInt("bandwidth");
+
                             tp.MODEL_STRUCTURE = HelperMethods.JSONArray2IntList(jsonRsp.getJSONArray("layerStructure"));
                             tp.BASE_GENERATION = jsonRsp.getInt("generation");
                             tp.SEED_NAME = jsonRsp.getString("seed_name");
