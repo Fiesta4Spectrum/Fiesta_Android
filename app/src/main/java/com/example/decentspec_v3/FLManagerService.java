@@ -318,6 +318,8 @@ public class FLManagerService extends Service {
                     caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
         }
         private boolean chargerReady() {    // need to be under charging
+            if (DEADLY_TRAINER)
+                return true;
             Intent batteryStatus = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
             int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
             return status == BatteryManager.BATTERY_STATUS_CHARGING ||
