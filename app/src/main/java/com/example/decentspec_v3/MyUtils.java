@@ -11,8 +11,10 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.shade.jackson.core.JsonProcessingException;
 
+import java.lang.reflect.Array;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +32,7 @@ public class MyUtils {
 
     public static String genName(int len){
         StringBuilder sb = new StringBuilder(len);
-        for(int i = 0; i < len; i++)
+        for (int i = 0; i < len; i++)
             sb.append(AB.charAt(rnd.nextInt(AB.length())));
         return sb.toString();
     }
@@ -44,5 +46,24 @@ public class MyUtils {
         int center_freq = SAMPLE_PARA_CF[configIndex];
         int bandwidth = SAMPLE_PARA_BD[configIndex];
         return String.format("%s\n\r1\n\r%d\n\r%d\n\r%d\n\r%s\n\r", SAMPLE_START_SIGNAL, center_freq, bandwidth, SAMPLE_RATE_INTERVAL, SAMPLE_END_SIGNAL);
+    }
+    public static float[] powerMerge(float[] small_bins, int merge_per_bins) {
+        if (merge_per_bins == 0)
+            return null;
+        int len = small_bins.length;
+        float[] merged_bins = new float[len / merge_per_bins];
+        for (int i = 0; i < len; i = i + merge_per_bins) {
+            if ((len - i) >= merge_per_bins) {
+                merged_bins[i / merge_per_bins] = merge(Arrays.copyOfRange(small_bins, i, i + merge_per_bins));
+            }
+        }
+        return merged_bins;
+    }
+    private static float merge(float[] bins) {
+        float total = 0.0f;
+        for (int i = 0; i < bins.length; i++) {
+            total += Math.pow(10, bins[i] / 10);
+        }
+        return (float) Math.log10(total) * 10;
     }
 }

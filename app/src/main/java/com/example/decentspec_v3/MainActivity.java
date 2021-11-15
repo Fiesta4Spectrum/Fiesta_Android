@@ -62,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
         // init route
         GlobalPrefMgr.init(this);
         if (Config.USE_DUMMY_DATASET) {
+            // force to reset when use dummy dataset
             GlobalPrefMgr.setField(GlobalPrefMgr.TASK, "null");
             GlobalPrefMgr.setField(GlobalPrefMgr.BASE_GEN, -1);
         }
