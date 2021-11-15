@@ -83,10 +83,11 @@ public class HTTPAccessor {
 
                             JSONObject weight_json = jsonRsp.getJSONObject("weight");
                             tp.GLOBAL_WEIGHT = HelperMethods.stateDict2paramTable(weight_json);
+                            Log.d("HTTP", "[get global] " + weight_json.toString());
 
                             JSONObject preproc_json = jsonRsp.getJSONObject("preprocPara");
-                            tp.DATASET_AVG = HelperMethods.JSONArray2FloatList(preproc_json.getJSONArray("avg"));
-                            tp.DATASET_STD = HelperMethods.JSONArray2FloatList(preproc_json.getJSONArray("std"));
+                            tp.DATASET_AVG = HelperMethods.JSONArray2DoubleList(preproc_json.getJSONArray("avg"));
+                            tp.DATASET_STD = HelperMethods.JSONArray2DoubleList(preproc_json.getJSONArray("std"));
 
                             JSONObject train_json = jsonRsp.getJSONObject("trainPara");
                             // TODO package train paras into a struct object

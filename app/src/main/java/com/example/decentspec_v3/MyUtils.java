@@ -47,11 +47,11 @@ public class MyUtils {
         int bandwidth = SAMPLE_PARA_BD[configIndex];
         return String.format("%s\n\r1\n\r%d\n\r%d\n\r%d\n\r%s\n\r", SAMPLE_START_SIGNAL, center_freq, bandwidth, SAMPLE_RATE_INTERVAL, SAMPLE_END_SIGNAL);
     }
-    public static float[] powerMerge(float[] small_bins, int merge_per_bins) {
+    public static double[] powerMerge(double[] small_bins, int merge_per_bins) {
         if (merge_per_bins == 0)
             return null;
         int len = small_bins.length;
-        float[] merged_bins = new float[len / merge_per_bins];
+        double[] merged_bins = new double[len / merge_per_bins];
         for (int i = 0; i < len; i = i + merge_per_bins) {
             if ((len - i) >= merge_per_bins) {
                 merged_bins[i / merge_per_bins] = merge(Arrays.copyOfRange(small_bins, i, i + merge_per_bins));
@@ -59,11 +59,11 @@ public class MyUtils {
         }
         return merged_bins;
     }
-    private static float merge(float[] bins) {
-        float total = 0.0f;
+    private static double merge(double[] bins) {
+        double total = 0.0f;
         for (int i = 0; i < bins.length; i++) {
             total += Math.pow(10, bins[i] / 10);
         }
-        return (float) Math.log10(total) * 10;
+        return (double) Math.log10(total) * 10;
     }
 }

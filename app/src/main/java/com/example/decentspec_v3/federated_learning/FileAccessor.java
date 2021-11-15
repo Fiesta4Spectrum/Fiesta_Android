@@ -28,9 +28,9 @@ public class FileAccessor {
         this.context = context;
     }
 
-    public List<Pair<float[], float[]>> readFrom(String fileName, TrainingPara tp) {
+    public List<Pair<double[], double[]>> readFrom(String fileName, TrainingPara tp) {
         // TODO read from several files instead of one file
-        List<Pair<float[],float[]>> trainList = new ArrayList<>();
+        List<Pair<double[],double[]>> trainList = new ArrayList<>();
         try {
             InputStream fin;
             if (USE_DUMMY_DATASET) {
@@ -42,7 +42,7 @@ public class FileAccessor {
                 String line;
                 line = reader.readLine();
                 while (line != null) {
-                    Pair<float[], float[]> newSample = string2float(line, tp);
+                    Pair<double[], double[]> newSample = string2double(line, tp);
                     if (newSample != null)
                         trainList.add(newSample);
                     line = reader.readLine();
@@ -61,52 +61,52 @@ public class FileAccessor {
         return trainList;
     }
 
-    private Pair<float[], float[]> tvPreprocess(float[] floatList, TrainingPara tp) {
+    private Pair<double[], double[]> tvPreprocess(double[] doubleList, TrainingPara tp) {
         int inSize = tp.MODEL_STRUCTURE.get(0);
         int outSize = tp.MODEL_STRUCTURE.get(tp.MODEL_STRUCTURE.size() - 1);
-        float[] inList;
-        float[] outList;
-        boolean assertCond = floatList.length > 3;
+        double[] inList;
+        double[] outList;
+        boolean assertCond = doubleList.length > 3;
         if (!assertCond) {
             Log.d(TAG, "Error, inconsistent dataset format");
             return null;
         }
-        inList = Arrays.copyOfRange(floatList, 0, 2);
-        float[] outListResource = Arrays.copyOfRange(floatList, 3, 30 + 3);
+        inList = Arrays.copyOfRange(doubleList, 0, 2);
+        double[] outListResource = Arrays.copyOfRange(doubleList, 3, 30 + 3);
         outList = MyUtils.powerMerge(outListResource, outListResource.length);
         return standardize(inList, outList, tp);
     }
-    private Pair<float[], float[]> ltePreprocess(float[] floatList, TrainingPara tp) {
+    private Pair<double[], double[]> ltePreprocess(double[] doubleList, TrainingPara tp) {
         int inSize = tp.MODEL_STRUCTURE.get(0);
         int outSize = tp.MODEL_STRUCTURE.get(tp.MODEL_STRUCTURE.size() - 1);
-        float[] inList;
-        float[] outList;
-        boolean assertCond = (inSize == outSize) && (floatList.length == inSize + 3);
+        double[] inList;
+        double[] outList;
+        boolean assertCond = (inSize == outSize) && (doubleList.length == inSize + 3);
         if (!assertCond) {
             Log.d(TAG, "Error, inconsistent dataset format");
             return null;
         }
-        inList = Arrays.copyOfRange(floatList, 3, floatList.length);
-        outList = Arrays.copyOfRange(floatList, 3, floatList.length);
+        inList = Arrays.copyOfRange(doubleList, 3, doubleList.length);
+        outList = Arrays.copyOfRange(doubleList, 3, doubleList.length);
         return standardize(inList, outList, tp);
     }
 
-    private Pair<float[], float[]> dummyPreprocess(float[] floatList, TrainingPara tp) {
+    private Pair<double[], double[]> dummyPreprocess(double[] doubleList, TrainingPara tp) {
         int inSize = tp.MODEL_STRUCTURE.get(0);
         int outSize = tp.MODEL_STRUCTURE.get(tp.MODEL_STRUCTURE.size() - 1);
-        float[] inList;
-        float[] outList;
-        boolean assertCond = (inSize + outSize) == floatList.length;
+        double[] inList;
+        double[] outList;
+        boolean assertCond = (inSize + outSize) == doubleList.length;
         if (!assertCond) {
             Log.d(TAG, "Error, inconsistent dataset format");
             return null;
         }
-        inList = Arrays.copyOfRange(floatList, 0, inSize);
-        outList = Arrays.copyOfRange(floatList, inSize, floatList.length);
+        inList = Arrays.copyOfRange(doubleList, 0, inSize);
+        outList = Arrays.copyOfRange(doubleList, inSize, doubleList.length);
         return standardize(inList, outList, tp);
     }
 
-    private Pair<float[], float[]> standardize(float[] inList, float[] outList, TrainingPara tp) {
+    private Pair<double[], double[]> standardize(double[] inList, double[] outList, TrainingPara tp) {
         boolean assertCond = (inList.length + outList.length == tp.DATASET_AVG.size()) && (tp.DATASET_AVG.size() == tp.DATASET_STD.size());
         if (!assertCond) {
             Log.d(TAG, "Error, inconsistent standardize format");
@@ -118,24 +118,34 @@ public class FileAccessor {
         for (int i = 0; i < outList.length; i++) {
             outList[i] = (outList[i] - tp.DATASET_AVG.get(i + inList.length)) / tp.DATASET_STD.get(i + inList.length);
         }
+//        Log.d(TAG, "input is " + array2string(inList));
+//        Log.d(TAG, "output is " + array2string(outList));
         return new Pair<>(inList, outList);
     }
 
-    private Pair<float[], float[]> string2float(String str, TrainingPara tp) {
+    private Pair<double[], double[]> string2double(String str, TrainingPara tp) {
         String[] strList = str.split(" ");
-        float[] floatList = new float[strList.length];
+        double[] doubleList = new double[strList.length];
         for (int i=0; i<strList.length; i++)
-            floatList[i] = Float.parseFloat(strList[i]);
+            doubleList[i] = Double.parseDouble(strList[i]);
         // for dummy dataset
         if (USE_DUMMY_DATASET) {
-            return dummyPreprocess(floatList, tp);
+            return dummyPreprocess(doubleList, tp);
         }
         if (tp.SEED_NAME.contains("lte")) {
-            return ltePreprocess(floatList, tp);
+            return ltePreprocess(doubleList, tp);
         }
         if (tp.SEED_NAME.contains("tv")) {
-            return tvPreprocess(floatList, tp);
+            return tvPreprocess(doubleList, tp);
         }
         return null;
+    }
+
+    private String array2string(double[] arr) {
+        String ret = "";
+        for (int i = 0; i<arr.length; i++) {
+            ret = ret + String.valueOf(arr[i]) + " ";
+        }
+        return ret;
     }
 }

@@ -17,6 +17,7 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -28,6 +29,8 @@ import com.example.decentspec_v3.federated_learning.HelperMethods;
 import com.example.decentspec_v3.federated_learning.ScoreListener;
 import com.example.decentspec_v3.federated_learning.TrainingPara;
 
+import org.deeplearning4j.datasets.iterator.AbstractDataSetIterator;
+import org.deeplearning4j.datasets.iterator.DoublesDataSetIterator;
 import org.deeplearning4j.datasets.iterator.FloatsDataSetIterator;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.json.JSONException;
@@ -144,14 +147,14 @@ public class FLManagerService extends Service {
                 // ***** read train dataset *****
                 FileAccessor mFileAccessor = new FileAccessor(context);                 // io entity
                 // TODO use the real file data
-                List<Pair<float[], float[]>> localTrainList = mFileAccessor.readFrom(file.fileName, mTrainingPara);
+                List<Pair<double[], double[]>> localTrainList = mFileAccessor.readFrom(file.fileName, mTrainingPara);
                 if (localTrainList == null || localTrainList.size() == 0) {
                     Log.d(TAG, "file not available");
                     cleanup();
                     return;
                 }
                 // ***** create model *****
-                DataSetIterator localDataset = new FloatsDataSetIterator(localTrainList, mTrainingPara.BATCH_SIZE);
+                DataSetIterator localDataset = new DoublesDataSetIterator(localTrainList, mTrainingPara.BATCH_SIZE);
                 MultiLayerNetwork localModel = mTrainingPara.buildModel();
                 localModel.init();
                 // ***** init with global weight *****

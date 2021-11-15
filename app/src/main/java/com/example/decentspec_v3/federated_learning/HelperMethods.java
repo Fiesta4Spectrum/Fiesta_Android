@@ -41,7 +41,7 @@ public class HelperMethods {
         int layerNum = paramTable.size()/2;
         for (String key: paramTable.keySet()) {
             int depth = key.contains("_W") ? 2:1;
-            ArrayList<ArrayList<Float>> doubleBracket = INDArray2ArrayList(paramTable.get(key).transpose());
+            ArrayList<ArrayList<Double>> doubleBracket = INDArray2ArrayList(paramTable.get(key).transpose());
             if (depth > 1) ret.put(rename_pt2sd(key, layerNum), new JSONArray(new Gson().toJson(doubleBracket)));
             if (depth == 1) ret.put(rename_pt2sd(key, layerNum), new JSONArray(new Gson().toJson(doubleBracket.get(0))));
         }
@@ -49,15 +49,15 @@ public class HelperMethods {
         return ret;
     }
 
-    public static ArrayList<ArrayList<Float>> INDArray2ArrayList(INDArray ndArray) {
-        ArrayList<ArrayList<Float>> ret = new ArrayList<>();
+    public static ArrayList<ArrayList<Double>> INDArray2ArrayList(INDArray ndArray) {
+        ArrayList<ArrayList<Double>> ret = new ArrayList<>();
         long[] shape = ndArray.shape(); // normally it should be a [x,y] format
         int row = (int)shape[0];
         int col = (int)shape[1];
         for (int i = 0; i < row; i ++) {
-            ArrayList<Float> new_row = new ArrayList<>();
+            ArrayList<Double> new_row = new ArrayList<>();
             for (int j = 0; j < col; j ++) {
-                new_row.add(ndArray.getFloat(i, j));
+                new_row.add(ndArray.getDouble(i, j));
             }
             ret.add(new_row);
         }
@@ -110,11 +110,11 @@ public class HelperMethods {
             intList.add(JArray.getInt(i));
         return intList;
     }
-    public static List<Float> JSONArray2FloatList(JSONArray JArray) throws JSONException {
-        List<Float> floatList = new ArrayList<Float>();
+    public static List<Double> JSONArray2DoubleList(JSONArray JArray) throws JSONException {
+        List<Double> doubleList = new ArrayList<Double>();
         for (int i = 0; i < JArray.length(); i++ )
-            floatList.add((float)JArray.getDouble(i));
-        return floatList;
+            doubleList.add((double)JArray.getDouble(i));
+        return doubleList;
     }
 
     public static INDArray Json2IDNArray(JsonElement json_array, int depth) {

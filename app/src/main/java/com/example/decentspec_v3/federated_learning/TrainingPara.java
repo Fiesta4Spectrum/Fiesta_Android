@@ -24,8 +24,8 @@ public class TrainingPara {
     public Map<String, INDArray> GLOBAL_WEIGHT;
 
     // std paras
-    public List<Float> DATASET_AVG;
-    public List<Float>  DATASET_STD;
+    public List<Double> DATASET_AVG;
+    public List<Double>  DATASET_STD;
 
     public Integer DATASET_SIZE;
     public String DATASET_NAME;
