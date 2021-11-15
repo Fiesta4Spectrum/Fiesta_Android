@@ -288,18 +288,19 @@ public class SerialListenerService extends Service {
                 myThread = new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        try {
-                            Thread.sleep(SAMPLE_SWITCH_INTERVAL);
-                        } catch (InterruptedException e) {
-                            Log.d(TAG, "Auto reconfigure quit");
-                            return;
-                        }
-                        try {
-                            myPort.write(MyUtils.genConfigData(configIndex).getBytes(), SERIAL_WRITE_TIMEOUT);
-                        } catch (IOException e) {
-                            Log.d(TAG, "unable to write to serial");
-                            e.printStackTrace();
-                        }
+                        while (!Thread.currentThread().isInterrupted())
+                            try {
+                                Thread.sleep(SAMPLE_SWITCH_INTERVAL);
+                                try {
+                                    myPort.write(MyUtils.genConfigData(configIndex).getBytes(), SERIAL_WRITE_TIMEOUT);
+                                } catch (IOException e) {
+                                    Log.d(TAG, "unable to write to serial");
+                                    e.printStackTrace();
+                                }
+                            } catch (InterruptedException e) {
+                                Log.d(TAG, "Auto reconfigure quit");
+                                return;
+                            }
                     }
                 });
                 myThread.start();
