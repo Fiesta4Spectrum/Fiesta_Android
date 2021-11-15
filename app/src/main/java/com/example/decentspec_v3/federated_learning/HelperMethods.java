@@ -1,5 +1,7 @@
 package com.example.decentspec_v3.federated_learning;
 
+import android.util.Log;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
@@ -39,13 +41,27 @@ public class HelperMethods {
     public static JSONObject paramTable2stateDict(Map<String, INDArray> paramTable) throws JsonProcessingException, JSONException {
         JSONObject ret = new JSONObject();
         int layerNum = paramTable.size()/2;
-        for (String key: paramTable.keySet()) {
+        Log.d("dl4j-pytorch", "before: " + paramTable.toString().replace("\n", " "));
+        for (String key: paramTable.keySet()) {     // for each layer's each para(wight, bias)
             int depth = key.contains("_W") ? 2:1;
             ArrayList<ArrayList<Double>> doubleBracket = INDArray2ArrayList(paramTable.get(key).transpose());
             if (depth > 1) ret.put(rename_pt2sd(key, layerNum), new JSONArray(new Gson().toJson(doubleBracket)));
-            if (depth == 1) ret.put(rename_pt2sd(key, layerNum), new JSONArray(new Gson().toJson(doubleBracket.get(0))));
+            if (depth == 1) ret.put(rename_pt2sd(key, layerNum), new JSONArray(new Gson().toJson(removeBracket(doubleBracket))));
         }
+        Log.d("dl4j-pytorch", "after: " + ret.toString());
         // TODO add format check
+        return ret;
+    }
+
+    private static ArrayList<Double> removeBracket(ArrayList<ArrayList<Double>> doubleBracket) {
+        ArrayList<Double> ret = new ArrayList<>();
+        for (ArrayList<Double> smallBracket: doubleBracket) {
+            if (smallBracket.size() != 1) {
+                Log.d("paraTable2stateDict", "wrong bias format !!!");
+                return null;
+            }
+            ret.add(smallBracket.get(0));
+        }
         return ret;
     }
 
