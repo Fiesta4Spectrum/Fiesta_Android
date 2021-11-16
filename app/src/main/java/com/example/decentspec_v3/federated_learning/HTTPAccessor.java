@@ -83,7 +83,7 @@ public class HTTPAccessor {
 
                             JSONObject weight_json = jsonRsp.getJSONObject("weight");
                             tp.GLOBAL_WEIGHT = HelperMethods.stateDict2paramTable(weight_json);
-                            Log.d("HTTP", "[get global] " + weight_json.toString());
+//                            Log.d("HTTP", "[get global] " + weight_json.toString());
 
                             JSONObject preproc_json = jsonRsp.getJSONObject("preprocPara");
                             tp.DATASET_AVG = HelperMethods.JSONArray2DoubleList(preproc_json.getJSONArray("avg"));
@@ -122,7 +122,7 @@ public class HTTPAccessor {
         return responded;
     }
 
-    public boolean sendTrainedLocal(String serverAddr, int size, double delta_loss, int base_gen, JSONObject localWeight) throws JSONException {
+    public boolean sendTrainedLocal(String serverAddr, int size, double delta_loss, TrainingPara tp, JSONObject localWeight) throws JSONException {
             /*
                 MLdata = {
                     'stat' : {  'size' : size,
@@ -136,6 +136,7 @@ public class HTTPAccessor {
                     'timestamp' : genTimestamp(),
                     'type' : 'localModelWeight',
                     'plz_spread' : 1,
+                    'seed_name' : string,
                 }
             */
         threadDone = false;
@@ -147,7 +148,7 @@ public class HTTPAccessor {
         MLData_stat.put("lossDelta", delta_loss);
         MLData.put("stat", MLData_stat);
         MLData.put("weight", localWeight);
-        MLData.put("base_gen", base_gen);
+        MLData.put("base_gen", tp.BASE_GENERATION);
 
         JSONObject jsonBody = new JSONObject();
         jsonBody.put("author", GlobalPrefMgr.getName());
@@ -155,8 +156,9 @@ public class HTTPAccessor {
         jsonBody.put("type", "localModelWeight");
         jsonBody.put("timestamp", MyUtils.genTimestamp());
         jsonBody.put("plz_spread", 1);
+        jsonBody.put("seed_name", tp.SEED_NAME);
         final String requestBody = jsonBody.toString();
-        Log.d("HTTP", "[upload global] " + requestBody);
+//        Log.d("HTTP", "[upload global] " + requestBody);
 
         StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
                 new Response.Listener<String>() {

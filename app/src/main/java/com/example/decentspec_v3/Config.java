@@ -3,6 +3,7 @@ package com.example.decentspec_v3;
 public class Config {
     // global preference
     public static final int DEVICE_ID_LENGTH = 10;
+    public static final boolean ALWAYS_ON = true;
 
     // sampling related
     public static final int GPS_UPDATE_INTERVAL = 1000; // 1s update
@@ -15,6 +16,7 @@ public class Config {
     public static final boolean ENABLE_GC_FREQ_LIMIT = true;
     public static final boolean NEW_GLOBAL_REQUIRED = true;
     public static final boolean DEADLY_TRAINER = true;
+    public static final boolean SHUFFLE_DATASET_AHEAD = true;
 
     // api
     public static final String SEED_NODE = "http://api.decentspec.org:5000";

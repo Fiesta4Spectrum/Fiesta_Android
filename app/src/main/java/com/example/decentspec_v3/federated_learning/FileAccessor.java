@@ -76,6 +76,21 @@ public class FileAccessor {
         outList = MyUtils.powerMerge(outListResource, outListResource.length);
         return standardize(inList, outList, tp);
     }
+    private Pair<double[], double[]> tvMultiPreprocess(double[] doubleList, TrainingPara tp) {
+        int inSize = tp.MODEL_STRUCTURE.get(0);
+        int outSize = tp.MODEL_STRUCTURE.get(tp.MODEL_STRUCTURE.size() - 1);
+        double[] inList;
+        double[] outList;
+        boolean assertCond = doubleList.length > 3;
+        if (!assertCond) {
+            Log.d(TAG, "Error, inconsistent dataset format");
+            return null;
+        }
+        inList = Arrays.copyOfRange(doubleList, 0, 2);
+        double[] outListResource = Arrays.copyOfRange(doubleList, 3, 30 * 8 + 3);
+        outList = MyUtils.powerMerge(outListResource, 30);
+        return standardize(inList, outList, tp);
+    }
     private Pair<double[], double[]> ltePreprocess(double[] doubleList, TrainingPara tp) {
         int inSize = tp.MODEL_STRUCTURE.get(0);
         int outSize = tp.MODEL_STRUCTURE.get(tp.MODEL_STRUCTURE.size() - 1);
@@ -107,6 +122,7 @@ public class FileAccessor {
     }
 
     private Pair<double[], double[]> standardize(double[] inList, double[] outList, TrainingPara tp) {
+        if ((inList == null) || (outList == null)) return null;
         boolean assertCond = (inList.length + outList.length == tp.DATASET_AVG.size()) && (tp.DATASET_AVG.size() == tp.DATASET_STD.size());
         if (!assertCond) {
             Log.d(TAG, "Error, inconsistent standardize format");
@@ -134,6 +150,9 @@ public class FileAccessor {
         }
         if (tp.SEED_NAME.contains("lte")) {
             return ltePreprocess(doubleList, tp);
+        }
+        if (tp.SEED_NAME.contains("mtv")) {
+            return tvMultiPreprocess(doubleList, tp);
         }
         if (tp.SEED_NAME.contains("tv")) {
             return tvPreprocess(doubleList, tp);

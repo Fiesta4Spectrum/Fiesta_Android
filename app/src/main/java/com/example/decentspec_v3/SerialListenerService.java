@@ -223,8 +223,7 @@ public class SerialListenerService extends Service {
                 startRead(); // setup reading data thread
                 // reconfig the board after a while
                 if (SAMPLE_RECONFIG)
-                    mySampleReconfiger = new SampleReconfiger(switchCounter);
-                switchCounter = (switchCounter + 1) % SAMPLE_RANGE_NUM;
+                    mySampleReconfiger = new SampleReconfiger();
             }
         }
 
@@ -284,7 +283,7 @@ public class SerialListenerService extends Service {
             private final String TAG = "serialReconfig";
             // it will only reconfig only once, because board will reboot then serial disconnect
             private final Thread myThread;
-            public SampleReconfiger(int configIndex) {
+            public SampleReconfiger() {
                 myThread = new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -292,7 +291,8 @@ public class SerialListenerService extends Service {
                             try {
                                 Thread.sleep(SAMPLE_SWITCH_INTERVAL);
                                 try {
-                                    myPort.write(MyUtils.genConfigData(configIndex).getBytes(), SERIAL_WRITE_TIMEOUT);
+                                    switchCounter = (switchCounter + 1) % SAMPLE_RANGE_NUM;
+                                    myPort.write(MyUtils.genConfigData(switchCounter).getBytes(), SERIAL_WRITE_TIMEOUT);
                                 } catch (IOException e) {
                                     Log.d(TAG, "unable to write to serial");
                                     e.printStackTrace();

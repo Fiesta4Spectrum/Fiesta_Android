@@ -39,6 +39,7 @@ import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.primitives.Pair;
 import org.nd4j.shade.jackson.core.JsonProcessingException;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.example.decentspec_v3.Config.*;
@@ -154,6 +155,8 @@ public class FLManagerService extends Service {
                     return;
                 }
                 // ***** create model *****
+                if (SHUFFLE_DATASET_AHEAD)
+                    Collections.shuffle(localTrainList);
                 DataSetIterator localDataset = new DoublesDataSetIterator(localTrainList, mTrainingPara.BATCH_SIZE);
                 MultiLayerNetwork localModel = mTrainingPara.buildModel();
                 localModel.init();
@@ -200,7 +203,7 @@ public class FLManagerService extends Service {
                                 mTrainingPara.MINER_LIST.get(i),
                                 mTrainingPara.DATASET_SIZE,
                                 init_loss - end_loss,
-                                mTrainingPara.BASE_GENERATION,
+                                mTrainingPara,
                                 HelperMethods.paramTable2stateDict(localModel.paramTable())))
                             break;
                         if (i == mTrainingPara.MINER_LIST.size() - 1) {
