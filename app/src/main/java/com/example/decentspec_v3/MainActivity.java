@@ -135,8 +135,8 @@ public class MainActivity extends AppCompatActivity {
                 new BroadcastReceiver() {
                     @Override
                     public void onReceive(Context context, Intent intent) {
-                        String task = GlobalPrefMgr.getFieldString(GlobalPrefMgr.TASK);
-                        int version = GlobalPrefMgr.getFieldInt(GlobalPrefMgr.BASE_GEN);
+                        String task = intent.getStringExtra(TASK_NAME);
+                        int version = intent.getIntExtra(TASK_GEN, -1);
                         TextView taskName = findViewById(R.id.TaskAndVer);
                         taskName.setText(task + " @ " + version);
                     }

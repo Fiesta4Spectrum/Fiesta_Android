@@ -109,6 +109,7 @@ public class SerialListenerService extends Service {
                 appToast("no available GPS Tracker");
             UsbDevice myFirstUSB = touchFirstUSB(); // it will trigger the receiver if asking for permission
             if (myFirstUSB != null) { // if we already has the permission
+                Log.d(TAG, "there is an USB detected");
                 mNotificationBuilder.setContentText(NOTI_TEXT_CONNED);
                 mNotificationMgr.notify(NOTI_ID, mNotificationBuilder.build());
                 appToast("one device detected");
@@ -215,7 +216,7 @@ public class SerialListenerService extends Service {
 //            appToast("start one sample");
             myState = SERIAL_DISC;
             myDevice = device;
-            myPort = setupUsbPort(0,1);
+            myPort = setupUsbPort(0,0);
             if (myPort == null) {
                 stop();
             } else {
@@ -245,7 +246,7 @@ public class SerialListenerService extends Service {
             UsbSerialPort port = driver.getPorts().get(portIndex);
             try {
                 port.open(connection);
-                port.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
+                port.setParameters(BAUD_RATE, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
             } catch (IOException e) {
                 Log.d(TAG, "unknown mistake when init connection");
                 return null;
@@ -357,10 +358,17 @@ public class SerialListenerService extends Service {
                         String new_line = null;
                         synchronized (bufferLock) {
                             int startIndex = longBuffer.indexOf(SAMPLE_START_SIGNAL);
+                            if (startIndex > 0) {
+                                longBuffer = longBuffer.substring(startIndex); // eliminate content before "START"
+                                Log.d("long buffer", longBuffer);
+                            }
+                            startIndex = longBuffer.indexOf(SAMPLE_START_SIGNAL);
                             int endIndex = longBuffer.indexOf(SAMPLE_END_SIGNAL);
-                            if (startIndex >= 0 && endIndex > 0) {   // if both exist
-                                new_line = longBuffer.substring(startIndex, endIndex);
-                                longBuffer = longBuffer.substring(endIndex);
+                            Log.d(TAG, String.format("startIndex %d, endIndex %d", startIndex, endIndex));
+                            if (startIndex >= 0 && endIndex > 0 && startIndex < endIndex) {   // if both exist
+                                new_line = longBuffer.substring(startIndex, endIndex  + SAMPLE_END_SIGNAL.length());
+                                longBuffer = longBuffer.substring(endIndex + SAMPLE_END_SIGNAL.length());
+                                Log.d("long buffer", longBuffer);
                             }
                         }
                         if (new_line != null)
@@ -371,10 +379,14 @@ public class SerialListenerService extends Service {
                 // we could add the gps and timestamp only when we store the data into file
                 public void writeIntoFile(String content) {
                     double[] gps = mGPSTracker.getCurLocation();
+                    if (gps == null)
+                        gps = new double[]{0.0, 0.0};
                     long time = MyUtils.genTimestamp();
                     String[] elements = content.replace(SAMPLE_START_SIGNAL, "")
                                                 .replace(SAMPLE_END_SIGNAL, "")
                                                 .split("\\s+");
+                    if (elements[0].equals(""))
+                        elements = Arrays.copyOfRange(elements, 1, elements.length);
                     int centerFreq = Integer.parseInt(elements[0]);
                     int bandwidth = Integer.parseInt(elements[1]);
                     String[] PSD = Arrays.copyOfRange(elements, 2, elements.length);
@@ -410,6 +422,7 @@ public class SerialListenerService extends Service {
             synchronized (bufferLock) {
                 String rawString = new String(content);
                 longBuffer += rawString;
+                Log.d("long buffer", longBuffer);
             }
         }
         public boolean start() {

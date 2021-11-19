@@ -13,5 +13,7 @@ public class IntentDirectory {
     public static final String STATE_FIELD = "state";
     public static final String GPS_LATI_FIELD = "lati";
     public static final String GPS_LONGI_FIELD = "longi";
+    public static final String TASK_GEN = "generation";
+    public static final String TASK_NAME = "name";
 
 }

@@ -213,7 +213,8 @@ public class FLManagerService extends Service {
                             return;
                         }
                     }
-
+                    GlobalPrefMgr.setField(GlobalPrefMgr.BASE_GEN, mTrainingPara.BASE_GENERATION);
+                    GlobalPrefMgr.setField(GlobalPrefMgr.TASK, mTrainingPara.SEED_NAME);
                 } catch (JsonProcessingException | JSONException e) {
                     e.printStackTrace();
                 }
@@ -288,10 +289,10 @@ public class FLManagerService extends Service {
                 Log.d(TAG, "[fetchGlobal] there is no update on the global model");
                 return null;
             }
-            GlobalPrefMgr.setField(GlobalPrefMgr.BASE_GEN, mTrainingPara.BASE_GENERATION);
-            GlobalPrefMgr.setField(GlobalPrefMgr.TASK, mTrainingPara.SEED_NAME);
             // inform the main activity update of global model
-            Intent intent = new Intent(FL_TASK_FILTER);
+            Intent intent = new Intent(FL_TASK_FILTER)
+                                .putExtra(TASK_GEN, mTrainingPara.BASE_GENERATION)
+                                .putExtra(TASK_NAME, mTrainingPara.SEED_NAME);
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
             return mTrainingPara;
         }

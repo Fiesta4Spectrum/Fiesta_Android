@@ -41,14 +41,14 @@ public class HelperMethods {
     public static JSONObject paramTable2stateDict(Map<String, INDArray> paramTable) throws JsonProcessingException, JSONException {
         JSONObject ret = new JSONObject();
         int layerNum = paramTable.size()/2;
-        Log.d("dl4j-pytorch", "before: " + paramTable.toString().replace("\n", " "));
+//        Log.d("dl4j-pytorch", "before: " + paramTable.toString().replace("\n", " "));
         for (String key: paramTable.keySet()) {     // for each layer's each para(wight, bias)
             int depth = key.contains("_W") ? 2:1;
             ArrayList<ArrayList<Double>> doubleBracket = INDArray2ArrayList(paramTable.get(key).transpose());
             if (depth > 1) ret.put(rename_pt2sd(key, layerNum), new JSONArray(new Gson().toJson(doubleBracket)));
             if (depth == 1) ret.put(rename_pt2sd(key, layerNum), new JSONArray(new Gson().toJson(removeBracket(doubleBracket))));
         }
-        Log.d("dl4j-pytorch", "after: " + ret.toString());
+//        Log.d("dl4j-pytorch", "after: " + ret.toString());
         // TODO add format check
         return ret;
     }

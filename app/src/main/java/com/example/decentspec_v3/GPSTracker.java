@@ -61,6 +61,8 @@ public class GPSTracker {
     }
 
     public double[] getCurLocation() {
+        if (curLocation == null)
+            return null;
         return new double[]{curLocation.getLatitude(), curLocation.getLongitude()};
     }
 

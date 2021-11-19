@@ -10,7 +10,6 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.example.decentspec_v3.Config;
 import com.example.decentspec_v3.GlobalPrefMgr;
 import com.example.decentspec_v3.MyUtils;
 
@@ -25,13 +24,14 @@ import java.util.ArrayList;
 import static com.example.decentspec_v3.Config.API_GET_GLOBAL;
 import static com.example.decentspec_v3.Config.API_GET_MINER;
 import static com.example.decentspec_v3.Config.API_SEND_LOCAL;
-import static com.example.decentspec_v3.Config.SEED_NODE;
+import static com.example.decentspec_v3.Config.SEED_NODE_TV;
 
 public class HTTPAccessor {
     private final RequestQueue HTTPQueue;
     private volatile boolean threadDone; // thread flag need to be volatile to avoid cache
                                          // no need to add lock since only one writer and one reader
     private volatile boolean responded;
+    private ArrayList<String> minerHistory = null;
 
     public HTTPAccessor(Context context) {
         this.HTTPQueue = Volley.newRequestQueue(context);
@@ -41,7 +41,7 @@ public class HTTPAccessor {
         tp.MINER_LIST = new ArrayList<>();
         threadDone = false;
         responded = false;
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, SEED_NODE + API_GET_MINER,
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, SEED_NODE_TV + API_GET_MINER,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -51,6 +51,7 @@ public class HTTPAccessor {
                             for (int i=0; i < peers.length(); i++) {
                                 tp.MINER_LIST.add(peers.getString(i));
                             }
+                            minerHistory = tp.MINER_LIST;
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -64,11 +65,12 @@ public class HTTPAccessor {
                         Log.d("HTTP", error.toString());
                         threadDone = true;
                         responded = false;
+                        tp.MINER_LIST = minerHistory;
                     }
                 });
         HTTPQueue.add(stringRequest);
         join();
-        return responded;
+        return tp.MINER_LIST != null;
     }
 
     public boolean getLatestGlobal(String serverAddr, TrainingPara tp) {
