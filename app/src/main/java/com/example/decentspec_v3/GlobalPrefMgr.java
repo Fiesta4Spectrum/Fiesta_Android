@@ -10,10 +10,13 @@ import static com.example.decentspec_v3.MyUtils.genName;
 import static com.example.decentspec_v3.Config.*;
 
 public abstract class GlobalPrefMgr {
+
     // fields name
     public static final String DEVICE_ID = "id";
     public static final String TASK = "latestTask";
     public static final String BASE_GEN = "baseGeneration";
+    public static final String UPLOADED_INDEX = "numOfUploads";
+    public static final String TRAINED_INDEX = "numOfLocalTraining";
 
     private static SharedPreferences myPref = null;
     public static void init(Context context) {
@@ -31,9 +34,14 @@ public abstract class GlobalPrefMgr {
             Log.d("GlobalPref", "it is a new global preference");
             setField(DEVICE_ID, genName(DEVICE_ID_LENGTH));
             // init the other fields
-            setField(TASK, "null");
-            setField(BASE_GEN, -1);
+            resetValueFields();
         }
+    }
+    public static void resetValueFields() {
+        setField(TASK, "null");
+        setField(BASE_GEN, -1);
+        setField(UPLOADED_INDEX, 0);
+        setField(TRAINED_INDEX, 0);
     }
     public static String getName() {
         return getFieldString(DEVICE_ID);

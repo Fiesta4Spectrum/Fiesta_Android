@@ -7,46 +7,16 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkCapabilities;
-import android.os.BatteryManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.example.decentspec_v3.database.FileDatabaseMgr;
-import com.example.decentspec_v3.database.SampleFile;
-import com.example.decentspec_v3.federated_learning.FileAccessor;
-import com.example.decentspec_v3.federated_learning.HTTPAccessor;
-import com.example.decentspec_v3.federated_learning.HelperMethods;
-import com.example.decentspec_v3.federated_learning.ScoreListener;
-import com.example.decentspec_v3.federated_learning.TrainingPara;
-
-import org.deeplearning4j.datasets.iterator.AbstractDataSetIterator;
-import org.deeplearning4j.datasets.iterator.DoublesDataSetIterator;
-import org.deeplearning4j.datasets.iterator.FloatsDataSetIterator;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.json.JSONException;
-import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
-import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.primitives.Pair;
-import org.nd4j.shade.jackson.core.JsonProcessingException;
-
-import java.util.Collections;
-import java.util.List;
-
 import static com.example.decentspec_v3.Config.*;
 import static com.example.decentspec_v3.IntentDirectory.*;
-import static com.example.decentspec_v3.database.SampleFile.STAGE_RECEIVED;
-import static com.example.decentspec_v3.database.SampleFile.STAGE_TRAINED;
-import static com.example.decentspec_v3.database.SampleFile.STAGE_TRAINING;
 
 
 public class FLManagerService extends Service {
@@ -72,8 +42,8 @@ public class FLManagerService extends Service {
 
     // spinner
     private Context context;
-    private FLWorker TV_thread;
-    private FLWorker LTE_thread;
+    private FLWorker FLWorker_1;
+    private FLWorker FLWorker_2;
 
     public FLManagerService() {
 
@@ -110,21 +80,21 @@ public class FLManagerService extends Service {
 
     private void doTheWork() {
         /* find the cached data in local storage*/
-        if (ENABLE_TV) {
-            TV_thread = new FLWorker("tv_training", context, SEED_NODE_TV);
-            TV_thread.start();
+        if (ENABLE_WORKER1) {
+            FLWorker_1 = new FLWorker("tv_training", context, SEED_NODE_1);
+            FLWorker_1.start();
         }
-        if (ENABLE_LTE) {
-            LTE_thread = new FLWorker("lte_training", context, SEED_NODE_LTE);
-            LTE_thread.start();
+        if (ENABLE_WORKER2) {
+            FLWorker_2 = new FLWorker("lte_training", context, SEED_NODE_2);
+            FLWorker_2.start();
         }
     }
     private void stopTheWork() {
-        if (TV_thread != null && TV_thread.isAlive()) {
-            TV_thread.interrupt();
+        if (FLWorker_1 != null && FLWorker_1.isAlive()) {
+            FLWorker_1.interrupt();
         }
-        if (LTE_thread != null && LTE_thread.isAlive()) {
-            LTE_thread.interrupt();
+        if (FLWorker_2 != null && FLWorker_2.isAlive()) {
+            FLWorker_2.interrupt();
         }
         changeState(FL_IDLE);
         /* clean up here */

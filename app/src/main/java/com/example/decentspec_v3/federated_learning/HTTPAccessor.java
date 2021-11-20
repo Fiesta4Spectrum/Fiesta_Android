@@ -123,11 +123,12 @@ public class HTTPAccessor {
         return responded;
     }
 
-    public boolean sendTrainedLocal(String serverAddr, int size, double delta_loss, TrainingPara tp, JSONObject localWeight) throws JSONException {
+    public boolean sendTrainedLocal(String serverAddr, int size, double delta_loss, double end_loss, TrainingPara tp, JSONObject localWeight) throws JSONException {
             /*
                 MLdata = {
                     'stat' : {  'size' : size,
-                                'lossDelta' : lossDelta,},
+                                'lossDelta' : lossDelta,
+                                'trainedLoss' : end_loss },
                     'weight' : weight
                 }
 
@@ -147,6 +148,7 @@ public class HTTPAccessor {
         JSONObject MLData_stat = new JSONObject();
         MLData_stat.put("size", size);
         MLData_stat.put("lossDelta", delta_loss);
+        MLData_stat.put("trainedLoss", end_loss);
         MLData.put("stat", MLData_stat);
         MLData.put("weight", localWeight);
         MLData.put("base_gen", tp.BASE_GENERATION);

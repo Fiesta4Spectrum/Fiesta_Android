@@ -66,8 +66,7 @@ public class MainActivity extends AppCompatActivity {
         GlobalPrefMgr.init(this);
         if (Config.USE_DUMMY_DATASET) {
             // force to reset when use dummy dataset
-            GlobalPrefMgr.setField(GlobalPrefMgr.TASK, "null");
-            GlobalPrefMgr.setField(GlobalPrefMgr.BASE_GEN, -1);
+            GlobalPrefMgr.resetValueFields();
         }
 
         serial_switch = findViewById(R.id.serial_switch);

@@ -4,8 +4,8 @@ public class Config {
     // global preference
     public static final int DEVICE_ID_LENGTH = 10;
     public static final boolean ALWAYS_ON = true;
-    public static final boolean ENABLE_TV = true;
-    public static final boolean ENABLE_LTE = false;
+    public static final boolean ENABLE_WORKER1 = true;
+    public static final boolean ENABLE_WORKER2 = false;
 
     // sampling related
     public static final int GPS_UPDATE_INTERVAL = 1000; // 1s update
@@ -20,10 +20,11 @@ public class Config {
     public static final boolean NEW_GLOBAL_REQUIRED = true;
     public static final boolean DEADLY_TRAINER = true;
     public static final boolean SHUFFLE_DATASET_AHEAD = true;
+    public static final boolean UPLOAD_SUPPRESSION = true;
 
     // api
-    public static final String SEED_NODE_TV = "http://api.decentspec.org:5000";
-    public static final String SEED_NODE_LTE = "http://api.decentspec.org:5001";
+    public static final String SEED_NODE_1 = "http://api.decentspec.org:5000";
+    public static final String SEED_NODE_2 = "http://api.decentspec.org:5001";
     public static final String API_GET_MINER = "/miner_peers";
     public static final String API_SEND_LOCAL = "/new_transaction";
     public static final String API_GET_GLOBAL = "/global_model";

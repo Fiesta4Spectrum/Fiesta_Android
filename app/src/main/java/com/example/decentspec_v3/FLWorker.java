@@ -32,9 +32,6 @@ import java.util.List;
 
 import static com.example.decentspec_v3.Config.*;
 import static com.example.decentspec_v3.IntentDirectory.*;
-import static com.example.decentspec_v3.database.SampleFile.STAGE_RECEIVED;
-import static com.example.decentspec_v3.database.SampleFile.STAGE_TRAINED;
-import static com.example.decentspec_v3.database.SampleFile.STAGE_TRAINING;
 
 public class FLWorker extends Thread {
     private final String TAG;
@@ -131,30 +128,44 @@ public class FLWorker extends Thread {
             }
         }
         // ***** upload to miner *****
-        try {
-            for (int i = 0; i < mTrainingPara.MINER_LIST.size(); i++) {
-                if (mHTTP.sendTrainedLocal(
-                        mTrainingPara.MINER_LIST.get(i),
-                        mTrainingPara.DATASET_SIZE,
-                        init_loss - end_loss,
-                        mTrainingPara,
-                        HelperMethods.paramTable2stateDict(localModel.paramTable())))
-                    break;
-                if (i == mTrainingPara.MINER_LIST.size() - 1) {
-                    Log.d(TAG, "[updateLocal] miner node no connection");
-                    cleanup();
-                    return;
+        GlobalPrefMgr.setField(GlobalPrefMgr.TRAINED_INDEX,
+                GlobalPrefMgr.getFieldInt(GlobalPrefMgr.TRAINED_INDEX) + 1);
+        double delta_loss = init_loss-end_loss;
+        if ((! UPLOAD_SUPPRESSION) || (delta_loss >= 0)) {
+            try {
+                for (int i = 0; i < mTrainingPara.MINER_LIST.size(); i++) {
+                    if (mHTTP.sendTrainedLocal(
+                            mTrainingPara.MINER_LIST.get(i),
+                            mTrainingPara.DATASET_SIZE,
+                            delta_loss,
+                            end_loss,
+                            mTrainingPara,
+                            HelperMethods.paramTable2stateDict(localModel.paramTable()))) {
+                        oldVersion = mTrainingPara.BASE_GENERATION;
+                        oldTask = mTrainingPara.SEED_NAME;
+                        GlobalPrefMgr.setField(GlobalPrefMgr.UPLOADED_INDEX,
+                                GlobalPrefMgr.getFieldInt(GlobalPrefMgr.UPLOADED_INDEX) + 1);
+                        break;
+                    }
+                    if (i == mTrainingPara.MINER_LIST.size() - 1) {
+                        Log.d(TAG, "[updateLocal] miner node no connection");
+                        cleanup();
+                        return;
+                    }
                 }
+            } catch (JsonProcessingException | JSONException e) {
+                e.printStackTrace();
             }
-            oldVersion = mTrainingPara.BASE_GENERATION;
-            oldTask = mTrainingPara.SEED_NAME;
-        } catch (JsonProcessingException | JSONException e) {
-            e.printStackTrace();
         }
         // end of ML cycle =================================================================
+        updateUINumbers();
         cleanup();
     }
 
+    private void updateUINumbers() {
+        Intent intent = new Intent(FL_UIUPDATE_FILTER);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    }
     private void cleanup() { // call when interrupted
         // seems no specific things need to do
     }
@@ -206,6 +217,8 @@ public class FLWorker extends Thread {
         private boolean newGlobalSniffed(TrainingPara mtp) {
             if (!NEW_GLOBAL_REQUIRED)
                 return true;
+            if (mtp == null)
+                return false;
             String newTask = mtp.SEED_NAME;
             int newVersion = mtp.BASE_GENERATION;
             if (! oldTask.equals(newTask))

@@ -9,6 +9,7 @@ public class IntentDirectory {
     public static final String SERIAL_GPS_FILTER = "service.serial.gps";
     public static final String FL_STATE_FILTER = "service.fl.state";
     public static final String FL_TASK_FILTER = "service.fl.task_update";
+    public static final String FL_UIUPDATE_FILTER = "service.fl.ui_update";
 
     public static final String STATE_FIELD = "state";
     public static final String GPS_LATI_FIELD = "lati";
