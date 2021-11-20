@@ -21,6 +21,9 @@ public class SampleFile {
     @ColumnInfo(name = "file_name")
     public String fileName;
 
+    @ColumnInfo(name = "size")
+    public int size;
+
     @ColumnInfo(name = "stage")
     public int stage;
 
@@ -31,11 +34,12 @@ public class SampleFile {
         this.fileName = String.valueOf(fileName);
         this.stage = STAGE_RECEIVING;
         this.progress = 0;
+        this.size = 0;
     }
 
     @Override
     public String toString() {
-        return "id: " + id + " | filename: " + fileName + " | stage: " + stage + " | progress: " + progress;
+        return "id: " + id + " | filename: " + fileName + " | stage: " + stage + " | progress: " + progress + " | size: " + size;
     }
 
     public static SampleFile getDummyFile() {

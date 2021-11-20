@@ -11,9 +11,11 @@ public class ScoreListener extends BaseTrainingListener implements Serializable 
 
     private double score_avg;
     private TrainingPara para;
+    private final String TAG;
 
-    public ScoreListener(TrainingPara para) {
+    public ScoreListener(String tag, TrainingPara para) {
         this.para = para;
+        this.TAG = tag;
         score_avg = 0.0;
     }
 
@@ -23,7 +25,7 @@ public class ScoreListener extends BaseTrainingListener implements Serializable 
         int iter_in_epoch = iteration % (para.DATASET_SIZE / para.BATCH_SIZE);
         score_avg = (score_avg * iter_in_epoch + model.score()) / (iter_in_epoch+1);
         if  (iteration % 100 == 0)
-            Log.d("startTraining", String.valueOf(iteration) + " : " + String.valueOf(epoch) + " : " + String.valueOf(score_avg));
+            Log.d(TAG, String.valueOf(iteration) + " : " + String.valueOf(epoch) + " : " + String.valueOf(score_avg));
     }
 
     public double getScore() {

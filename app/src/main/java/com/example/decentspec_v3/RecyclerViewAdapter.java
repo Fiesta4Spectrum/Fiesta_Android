@@ -48,7 +48,8 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
         viewHolder.nameText.setText(file.fileName);
         viewHolder.stageText.setText(stage2String(file.stage));
-        viewHolder.progressBar.setText(int2Bar(file.progress));
+//        viewHolder.progressBar.setText(int2Bar(file.progress));
+        viewHolder.progressBar.setText("size=" + file.size);
     }
 
     @Override

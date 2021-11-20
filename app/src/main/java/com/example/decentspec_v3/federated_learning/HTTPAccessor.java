@@ -21,27 +21,27 @@ import org.nd4j.shade.jackson.core.JsonProcessingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
-import static com.example.decentspec_v3.Config.API_GET_GLOBAL;
-import static com.example.decentspec_v3.Config.API_GET_MINER;
-import static com.example.decentspec_v3.Config.API_SEND_LOCAL;
-import static com.example.decentspec_v3.Config.SEED_NODE_TV;
+import static com.example.decentspec_v3.Config.*;
 
 public class HTTPAccessor {
     private final RequestQueue HTTPQueue;
+    private final String SEED_ADDR;
     private volatile boolean threadDone; // thread flag need to be volatile to avoid cache
                                          // no need to add lock since only one writer and one reader
     private volatile boolean responded;
     private ArrayList<String> minerHistory = null;
+    private double reward = 0.0;
 
-    public HTTPAccessor(Context context) {
+    public HTTPAccessor(Context context, String seedAddr) {
         this.HTTPQueue = Volley.newRequestQueue(context);
+        this.SEED_ADDR = seedAddr;
     }
 
     public boolean fetchMinerList(TrainingPara tp) {
         tp.MINER_LIST = new ArrayList<>();
         threadDone = false;
         responded = false;
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, SEED_NODE_TV + API_GET_MINER,
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, SEED_ADDR + API_GET_MINER,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -71,6 +71,37 @@ public class HTTPAccessor {
         HTTPQueue.add(stringRequest);
         join();
         return tp.MINER_LIST != null;
+    }
+
+    public double fetchReward(String myId) {
+        threadDone = false;
+        responded = false;
+        reward = 0.0;
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, SEED_ADDR + API_GET_REWARD + myId,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            JSONObject jsonRsp = new JSONObject(response);
+                            reward = jsonRsp.getDouble("reward");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        threadDone = true;
+                        responded = true;
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("HTTP", error.toString());
+                        threadDone = true;
+                        responded = false;
+                    }
+                });
+        HTTPQueue.add(stringRequest);
+        join();
+        return reward;
     }
 
     public boolean getLatestGlobal(String serverAddr, TrainingPara tp) {
@@ -124,11 +155,12 @@ public class HTTPAccessor {
         return responded;
     }
 
-    public boolean sendTrainedLocal(String serverAddr, int size, double delta_loss, TrainingPara tp, JSONObject localWeight) throws JSONException {
+    public boolean sendTrainedLocal(String serverAddr, int size, double delta_loss, double end_loss, TrainingPara tp, JSONObject localWeight) throws JSONException {
             /*
                 MLdata = {
                     'stat' : {  'size' : size,
-                                'lossDelta' : lossDelta,},
+                                'lossDelta' : lossDelta,
+                                'trainedLoss' : end_loss },
                     'weight' : weight
                 }
 
@@ -148,6 +180,7 @@ public class HTTPAccessor {
         JSONObject MLData_stat = new JSONObject();
         MLData_stat.put("size", size);
         MLData_stat.put("lossDelta", delta_loss);
+        MLData_stat.put("trainedLoss", end_loss);
         MLData.put("stat", MLData_stat);
         MLData.put("weight", localWeight);
         MLData.put("base_gen", tp.BASE_GENERATION);

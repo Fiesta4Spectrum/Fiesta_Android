@@ -42,6 +42,17 @@ public class FileDatabaseMgr {
         return newSampleFile;
     }
 
+    public void increaseSize(SampleFile file) {
+        file.size += 1;
+//        Log.d(TAG, "update: " + file.toString());
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                dao.update(file);  //simple update seems not working
+            }
+        }).start();
+    }
+
     public void markStage(SampleFile file, int stage) {
         file.stage = stage;
 //        Log.d(TAG, "update: " + file.toString());
@@ -77,6 +88,15 @@ public class FileDatabaseMgr {
             @Override
             public void run() {
                 dao.delete(file);
+            }
+        }).start();
+    }
+    public void updateSize(SampleFile file, int size) {
+        file.size = size;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                dao.update(file);  //simple update seems not working
             }
         }).start();
     }
