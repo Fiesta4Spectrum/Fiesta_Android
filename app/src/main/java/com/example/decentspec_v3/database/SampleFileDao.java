@@ -27,9 +27,6 @@ public interface SampleFileDao {
     @Update(onConflict = OnConflictStrategy.REPLACE)
     void update(SampleFile newfile);
 
-    @Query("UPDATE SampleFile SET stage = :stage WHERE id = :id")
-    void update(int id, int stage);
-
     @Delete
     void delete(SampleFile newfile);
     /* TODO more diverse delete */

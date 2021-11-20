@@ -12,8 +12,8 @@
         android:layout_height="wrap_content"
         android:text="demo_0000000000.txt"
         android:paddingLeft="8dp"
-        android:gravity="left"
-        android:layout_weight="0.5"
+        android:gravity="center"
+        android:layout_weight="0.6"
         android:textSize="12sp" />
 
     <TextView
@@ -21,17 +21,17 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Training ..."
-        android:gravity="left"
-        android:layout_weight="0.24"
+        android:gravity="center"
+        android:layout_weight="0.16"
         android:textSize="12sp" />
 
     <TextView
         android:id="@+id/col3"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="█ █ █ █ █"
+        android:text="size"
         android:paddingLeft="4dp"
-        android:gravity="left"
-        android:layout_weight="0.26"
+        android:gravity="center"
+        android:layout_weight="0.24"
         android:textSize="12sp" />
 </LinearLayout>

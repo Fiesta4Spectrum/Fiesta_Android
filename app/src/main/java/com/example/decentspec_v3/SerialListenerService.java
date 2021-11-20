@@ -401,6 +401,7 @@ public class SerialListenerService extends Service {
                     for (SampleFile file : currentFiles) {
                         if (file.fileName.equals(targetFileName)) {
                             targetFile = file;
+                            break;
                         }
                     }
                     if (targetFile == null) {
@@ -411,6 +412,7 @@ public class SerialListenerService extends Service {
                         FileOutputStream myOutputStream = openFileOutput(targetFileName, Context.MODE_APPEND);
                         myOutputStream.write(newLine.getBytes());
                         myOutputStream.close();
+                        mDBMgr.increaseSize(targetFile);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
