@@ -72,9 +72,8 @@ public class FLManagerService extends Service {
 
     // spinner
     private Context context;
-    private Thread myDaemon;
-    private TrainingTrigger mTrainingTrigger;
-    private HTTPAccessor mHTTPAccessor;                 // http entity
+    private FLWorker TV_thread;
+    private FLWorker LTE_thread;
 
     public FLManagerService() {
 
@@ -102,7 +101,7 @@ public class FLManagerService extends Service {
             stopSelf();
         } else {
             Log.d(TAG, "start the service");
-            changeState(FL_IDLE);
+            changeState(FL_TRAIN);
             startForeground(NOTI_ID, genForegroundNotification());
             doTheWork();
         }
@@ -111,260 +110,24 @@ public class FLManagerService extends Service {
 
     private void doTheWork() {
         /* find the cached data in local storage*/
-        mTrainingTrigger = new TrainingTrigger();
-        mHTTPAccessor = new HTTPAccessor(context);
-        myDaemon = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                mTrainingTrigger.flushDatabase();
-                while (!Thread.currentThread().isInterrupted()) {
-                    try {
-                        // REMOTE ready: new global available
-                        TrainingPara mTPara = mTrainingTrigger.getNewGlobal();
-                        // LOCAL ready: wifi, battery, and local files
-                        SampleFile dataFile = mTrainingTrigger.getDataset(mTPara); // TODO change it to file list instead fo a single file
-                        if (dataFile != null && mTPara != null) {
-                            /* use this file to make a local train */
-                            oneLocalTraining(dataFile, mTPara);
-                            // end of one time training
-                        }
-                        Thread.sleep(ML_TASK_INTERVAL); // save time through check the env per interval
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-//                        Log.d(TAG, "interrupted during sleep");
-                        cleanup();
-                        break;
-                    }
-                }
-                cleanup();
-                // end due to external interrupt
-            }
-
-            // TODO add more fine interrupt check
-            private void oneLocalTraining(SampleFile file, TrainingPara mTrainingPara) {
-
-                // start of ML pipeline ============================================================
-                changeState(FL_TRAIN);
-                // ***** read train dataset *****
-                FileAccessor mFileAccessor = new FileAccessor(context);                 // io entity
-                // TODO use the real file data
-                List<Pair<double[], double[]>> localTrainList = mFileAccessor.readFrom(file.fileName, mTrainingPara);
-                if (localTrainList == null || localTrainList.size() == 0) {
-                    Log.d(TAG, "file not available");
-                    cleanup();
-                    return;
-                }
-                // ***** create model *****
-                if (SHUFFLE_DATASET_AHEAD)
-                    Collections.shuffle(localTrainList);
-                DataSetIterator localDataset = new DoublesDataSetIterator(localTrainList, mTrainingPara.BATCH_SIZE);
-                MultiLayerNetwork localModel = mTrainingPara.buildModel();
-                localModel.init();
-                // ***** init with global weight *****
-                for (String key : mTrainingPara.GLOBAL_WEIGHT.keySet()) {
-                    localModel.setParam(key, mTrainingPara.GLOBAL_WEIGHT.get(key));
-                }
-                // ***** training *****
-                double init_loss = 0.0;
-                double end_loss = 0.0;
-                mTrainingTrigger.markTraining();
-                if (ENABLE_GC_FREQ_LIMIT)
-                    Nd4j.getMemoryManager().setAutoGcWindow(5000);
-                for (int i = 0; i < mTrainingPara.EPOCH_NUM; i++) {
-                    try {
-                        // check interrupt signal between epochs
-                        if (Thread.currentThread().isInterrupted()) {
-                            mTrainingTrigger.rollBack(); // roll back database
-                            cleanup();
-                            return; // early return due to interrupt
-                        }
-
-                        ScoreListener mySL = new ScoreListener(mTrainingPara);
-                        localModel.setListeners(mySL);
-                        localModel.fit(localDataset);
-                        Log.d(TAG, "one epoch complete!");
-                        if (i == 0)
-                            init_loss = mySL.getScore(); // TODO this is not accurate, a score after one epoch training.
-                        if (i == mTrainingPara.EPOCH_NUM - 1)
-                            end_loss = mySL.getScore();
-                        mTrainingTrigger.progressOn();
-                    } catch (RuntimeException e) {
-                        Thread.currentThread().interrupt();
-                        mTrainingTrigger.rollBack(); // roll back database
-                        cleanup();
-                        return; // early return due to interrupt
-                    }
-                }
-                // ***** upload to miner *****
-                try {
-                    changeState(FL_COMM);
-                    for (int i = 0; i < mTrainingPara.MINER_LIST.size(); i++) {
-                        if (mHTTPAccessor.sendTrainedLocal(
-                                mTrainingPara.MINER_LIST.get(i),
-                                mTrainingPara.DATASET_SIZE,
-                                init_loss - end_loss,
-                                mTrainingPara,
-                                HelperMethods.paramTable2stateDict(localModel.paramTable())))
-                            break;
-                        if (i == mTrainingPara.MINER_LIST.size() - 1) {
-                            Log.d(TAG, "[updateLocal] miner node no connection");
-                            mTrainingTrigger.rollBack(); // roll back
-                            cleanup();
-                            return;
-                        }
-                    }
-                    GlobalPrefMgr.setField(GlobalPrefMgr.BASE_GEN, mTrainingPara.BASE_GENERATION);
-                    GlobalPrefMgr.setField(GlobalPrefMgr.TASK, mTrainingPara.SEED_NAME);
-                } catch (JsonProcessingException | JSONException e) {
-                    e.printStackTrace();
-                }
-                mTrainingTrigger.markTrained();
-                // end of ML cycle =================================================================
-                cleanup();
-            }
-
-            private void cleanup() { // call when interrupted
-                changeState(FL_IDLE);
-                // seems no specific things need to do
-            }
-
-        });
-        myDaemon.start();
+        if (ENABLE_TV) {
+            TV_thread = new FLWorker("tv_training", context, SEED_NODE_TV);
+            TV_thread.start();
+        }
+        if (ENABLE_LTE) {
+            LTE_thread = new FLWorker("lte_training", context, SEED_NODE_LTE);
+            LTE_thread.start();
+        }
     }
     private void stopTheWork() {
-        if (myDaemon.isAlive()) {
-            myDaemon.interrupt();
+        if (TV_thread != null && TV_thread.isAlive()) {
+            TV_thread.interrupt();
         }
+        if (LTE_thread != null && LTE_thread.isAlive()) {
+            LTE_thread.interrupt();
+        }
+        changeState(FL_IDLE);
         /* clean up here */
-    }
-
-    private class TrainingTrigger {
-
-        private final FileDatabaseMgr mDBMgr;
-        private final ConnectivityManager mConnMgr;
-        private SampleFile targetFile;
-
-        public TrainingTrigger() {
-            mDBMgr = new FileDatabaseMgr(context);
-            mConnMgr = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        }
-        public void flushDatabase() {
-            List<SampleFile> allList = mDBMgr.getFileList(); // it is not in main thread so its fine
-            for (SampleFile file : allList) {
-                mDBMgr.markStage(file, STAGE_RECEIVED);
-                mDBMgr.progressRst(file);
-            }
-        }
-        public SampleFile getDataset(TrainingPara tp) {
-            if (! (myState == FL_IDLE)) {                // first no other training going on
-                Log.d(TAG, "I am not idle, why you ask me train more");
-                return null;
-            }
-            Log.d(TAG, "currently wifi: " + wifiReady() +
-                                            ", charging: " + chargerReady());
-            if (! (wifiReady() && chargerReady()))      // second stationary environment
-                return null;
-            return dataReady(tp);                         // third, available database
-        }
-        public TrainingPara getNewGlobal() {
-            // fetching knowledge
-            changeState(FL_COMM);
-            TrainingPara mTrainingPara = new TrainingPara();                        // ML context info from remote
-            if (! mHTTPAccessor.fetchMinerList(mTrainingPara)) {                    // get minerlist
-                Log.d(TAG, "[fetchGlobal] seed node no connection");
-                changeState(FL_IDLE);
-                return null;
-            }
-            for (int i = 0; i < mTrainingPara.MINER_LIST.size(); i++) {             // get ML context
-                if (mHTTPAccessor.getLatestGlobal(mTrainingPara.MINER_LIST.get(i), mTrainingPara))
-                    break;
-                if (i == mTrainingPara.MINER_LIST.size() - 1) {
-                    Log.d(TAG, "[fetchGlobal] miner node no connection");
-                    changeState(FL_IDLE);
-                    return null;
-                }
-            }
-            changeState(FL_IDLE);
-            if (! newGlobalSniffed(mTrainingPara)) {
-                Log.d(TAG, "[fetchGlobal] there is no update on the global model");
-                return null;
-            }
-            // inform the main activity update of global model
-            Intent intent = new Intent(FL_TASK_FILTER)
-                                .putExtra(TASK_GEN, mTrainingPara.BASE_GENERATION)
-                                .putExtra(TASK_NAME, mTrainingPara.SEED_NAME);
-            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-            return mTrainingPara;
-        }
-        // private components:
-        private boolean newGlobalSniffed(TrainingPara mtp) {
-            if (!NEW_GLOBAL_REQUIRED)
-                return true;
-            String oldTask = GlobalPrefMgr.getFieldString(GlobalPrefMgr.TASK);
-            if (oldTask == null)
-                oldTask = "null";
-            Integer oldVersion = GlobalPrefMgr.getFieldInt(GlobalPrefMgr.BASE_GEN);
-            if (oldVersion == null)
-                oldVersion = -1;
-            String newTask = mtp.SEED_NAME;
-            int newVersion = mtp.BASE_GENERATION;
-            if (! oldTask.equals(newTask))
-                return true;
-            if (newVersion > oldVersion)
-                return true;
-            return false;
-        }
-
-        private boolean wifiReady() {       // need to be under usable wifi
-            Network curNetwork = mConnMgr.getActiveNetwork();
-            NetworkCapabilities caps = mConnMgr.getNetworkCapabilities(curNetwork);
-            return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) &&
-                    caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
-        }
-        private boolean chargerReady() {    // need to be under charging
-            if (DEADLY_TRAINER)
-                return true;
-            Intent batteryStatus = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-            int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
-            return status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                    status == BatteryManager.BATTERY_STATUS_FULL;
-        }
-        private SampleFile dataReady(TrainingPara tp) {        // need a usable training data
-            // clear the history train data file list
-            targetFile = null;
-            if (USE_DUMMY_DATASET)
-                return SampleFile.getDummyFile();   // use R.raw.gps_power
-            List<SampleFile> allList = mDBMgr.getFileList(); // it is not in main thread so its fine
-            for (SampleFile file : allList) {
-                if (rightSampleRange(file, tp)) {
-                    targetFile = file;
-                    Log.d(TAG, "will use file: " + targetFile.fileName);
-                    return file;
-                }
-            }
-            return null;
-        }
-        public boolean rightSampleRange(SampleFile file, TrainingPara tp) {
-            String expectingFileName = MyUtils.genFileName(tp.SAMPLE_CENTER_FREQ, tp.SAMPLE_BANDWIDTH);
-            return expectingFileName.equals(file.fileName);
-        }
-        public void markTraining() {
-            if (targetFile == null) return;
-            mDBMgr.markStage(targetFile, STAGE_TRAINING);
-        }
-        public void markTrained() {
-            if (targetFile == null) return;
-            mDBMgr.markStage(targetFile, STAGE_TRAINED);
-        }
-        public void rollBack() {
-            if (targetFile == null) return;
-            mDBMgr.markStage(targetFile, STAGE_RECEIVED);
-            mDBMgr.progressRst(targetFile);
-        }
-        public void progressOn() {
-            if (targetFile == null) return;
-            mDBMgr.progressOn(targetFile);
-        }
     }
 
     private void changeState(int state) {

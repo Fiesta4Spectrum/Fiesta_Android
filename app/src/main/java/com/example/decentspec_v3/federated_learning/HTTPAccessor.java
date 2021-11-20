@@ -21,27 +21,26 @@ import org.nd4j.shade.jackson.core.JsonProcessingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
-import static com.example.decentspec_v3.Config.API_GET_GLOBAL;
-import static com.example.decentspec_v3.Config.API_GET_MINER;
-import static com.example.decentspec_v3.Config.API_SEND_LOCAL;
-import static com.example.decentspec_v3.Config.SEED_NODE_TV;
+import static com.example.decentspec_v3.Config.*;
 
 public class HTTPAccessor {
     private final RequestQueue HTTPQueue;
+    private final String SEED_ADDR;
     private volatile boolean threadDone; // thread flag need to be volatile to avoid cache
                                          // no need to add lock since only one writer and one reader
     private volatile boolean responded;
     private ArrayList<String> minerHistory = null;
 
-    public HTTPAccessor(Context context) {
+    public HTTPAccessor(Context context, String seedAddr) {
         this.HTTPQueue = Volley.newRequestQueue(context);
+        this.SEED_ADDR = seedAddr;
     }
 
     public boolean fetchMinerList(TrainingPara tp) {
         tp.MINER_LIST = new ArrayList<>();
         threadDone = false;
         responded = false;
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, SEED_NODE_TV + API_GET_MINER,
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, SEED_ADDR + API_GET_MINER,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
