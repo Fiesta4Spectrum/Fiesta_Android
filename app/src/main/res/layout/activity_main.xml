@@ -7,7 +7,72 @@
     tools:context=".MainActivity">
 
     <TextView
-        android:id="@+id/reward_text"
+        android:id="@+id/TaskAndVer2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="No Task Assigned Yet"
+        android:textAlignment="viewEnd"
+        android:textSize="12sp"
+        android:textStyle="italic"
+        app:layout_constraintBaseline_toBaselineOf="@+id/textView12"
+        app:layout_constraintEnd_toEndOf="@+id/FL_switch" />
+
+    <TextView
+        android:id="@+id/textView12"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:text="http://api.decentspec.org:5001"
+        android:textSize="12sp"
+        android:textStyle="italic"
+        app:layout_constraintBaseline_toBaselineOf="@+id/textView3"
+        app:layout_constraintStart_toEndOf="@+id/textView3" />
+
+    <TextView
+        android:id="@+id/textView6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Upload Suppression"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="@+id/textView3"
+        app:layout_constraintTop_toBottomOf="@+id/textView3" />
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="App2"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="@+id/textView16"
+        app:layout_constraintTop_toBottomOf="@+id/textView16" />
+
+    <TextView
+        android:id="@+id/up_sup_1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="28dp"
+        android:text="0/0"
+        android:textAlignment="viewEnd"
+        android:textSize="12sp"
+        android:textStyle="italic"
+        app:layout_constraintBaseline_toBaselineOf="@+id/textView16"
+        app:layout_constraintStart_toEndOf="@+id/textView16" />
+
+    <TextView
+        android:id="@+id/up_sup_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="28dp"
+        android:text="0/0"
+        android:textAlignment="viewEnd"
+        android:textSize="12sp"
+        android:textStyle="italic"
+        app:layout_constraintBaseline_toBaselineOf="@+id/textView6"
+        app:layout_constraintStart_toEndOf="@+id/textView6" />
+
+    <TextView
+        android:id="@+id/reward1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="0.00"
@@ -15,7 +80,18 @@
         android:textSize="12sp"
         android:textStyle="italic"
         app:layout_constraintBaseline_toBaselineOf="@+id/textView"
-        app:layout_constraintEnd_toEndOf="@+id/TaskAndVer" />
+        app:layout_constraintEnd_toEndOf="@+id/TaskAndVer1" />
+
+    <TextView
+        android:id="@+id/reward2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0.00"
+        android:textAlignment="viewEnd"
+        android:textSize="12sp"
+        android:textStyle="italic"
+        app:layout_constraintBaseline_toBaselineOf="@+id/textView6"
+        app:layout_constraintEnd_toEndOf="@+id/TaskAndVer1" />
 
     <Switch
         android:id="@+id/FL_switch"
@@ -208,30 +284,19 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="4dp"
-        android:text="Seed Node Address"
+        android:text="App1"
         android:textColor="#000000"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/FL_switch" />
 
     <TextView
-        android:id="@+id/textView15"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Application and Version"
-        android:textColor="#000000"
-        app:layout_constraintStart_toStartOf="@+id/textView14"
-        app:layout_constraintTop_toBottomOf="@+id/textView14" />
-
-    <TextView
         android:id="@+id/textView16"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Device ID"
+        android:text="Upload Suppression"
         android:textColor="#000000"
-        app:layout_constraintStart_toStartOf="@+id/textView15"
-        app:layout_constraintTop_toBottomOf="@+id/textView15" />
+        app:layout_constraintStart_toStartOf="@+id/textView14"
+        app:layout_constraintTop_toBottomOf="@+id/textView14" />
 
     <TextView
         android:id="@+id/textView17"
@@ -240,18 +305,17 @@
         android:layout_marginTop="8dp"
         android:text="Local ML"
         android:textColor="#000000"
-        app:layout_constraintStart_toStartOf="@+id/textView16"
-        app:layout_constraintTop_toBottomOf="@+id/textView16" />
+        app:layout_constraintStart_toStartOf="@+id/textView7"
+        app:layout_constraintTop_toBottomOf="@+id/textView6" />
 
     <RadioGroup
         android:id="@+id/FLStateGroup"
         android:layout_width="300dp"
         android:layout_height="33dp"
-        android:layout_marginTop="2dp"
         android:checkedButton="@+id/RB_ML_idle"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="@+id/serialStateGroup"
-        app:layout_constraintTop_toBottomOf="@+id/textView16">
+        app:layout_constraintTop_toBottomOf="@+id/textView6">
 
         <RadioButton
             android:id="@+id/RB_ML_train"
@@ -262,7 +326,7 @@
             android:clickable="false"
             android:scaleX="0.8"
             android:scaleY="0.8"
-            android:text="training"
+            android:text="working"
             android:textSize="14sp" />
 
         <RadioButton
@@ -294,12 +358,12 @@
         android:id="@+id/textView18"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="12dp"
+        android:layout_marginStart="24dp"
         android:text="http://api.decentspec.org:5000"
         android:textSize="12sp"
         android:textStyle="italic"
         app:layout_constraintBaseline_toBaselineOf="@+id/textView14"
-        app:layout_constraintEnd_toEndOf="@+id/serial_switch" />
+        app:layout_constraintStart_toEndOf="@+id/textView14" />
 
     <TextView
         android:id="@+id/GPS_textview"
@@ -313,32 +377,31 @@
         app:layout_constraintEnd_toEndOf="@+id/serial_switch" />
 
     <TextView
-        android:id="@+id/TaskAndVer"
+        android:id="@+id/TaskAndVer1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="No Task Assigned Yet"
         android:textAlignment="viewEnd"
         android:textSize="12sp"
         android:textStyle="italic"
-        app:layout_constraintBaseline_toBaselineOf="@+id/textView15"
-        app:layout_constraintEnd_toEndOf="@+id/textView18" />
+        app:layout_constraintBaseline_toBaselineOf="@+id/textView18"
+        app:layout_constraintEnd_toEndOf="@+id/FL_switch" />
 
     <TextView
         android:id="@+id/device_id"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="28dp"
-        android:text="Not Yet Generated"
+        android:text="ID Not Generated Yet"
         android:textAlignment="viewEnd"
         android:textSize="12sp"
         android:textStyle="italic"
-        app:layout_constraintBaseline_toBaselineOf="@+id/textView16"
-        app:layout_constraintStart_toEndOf="@+id/textView16" />
+        app:layout_constraintBaseline_toBaselineOf="@+id/textView7"
+        app:layout_constraintEnd_toEndOf="@+id/textView8" />
 
     <LinearLayout
         android:id="@+id/Broader_dataset"
         android:layout_width="375dp"
-        android:layout_height="120dp"
+        android:layout_height="114dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="16dp"
@@ -352,10 +415,10 @@
             android:layout_height="match_parent"
             android:padding="2dp">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_database"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_database"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
 
         </ScrollView>
 
@@ -376,7 +439,7 @@
         android:id="@+id/textView21"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:text="Wisconsin Wireless and NetworkinG Systems (WiNGS) Laboratory"
         android:textColor="#AFAFAF"
         android:textSize="12sp"
@@ -430,7 +493,17 @@
         android:text="Reward Earned"
         android:textColor="#000000"
         app:layout_constraintBaseline_toBaselineOf="@+id/textView16"
-        app:layout_constraintEnd_toStartOf="@+id/reward_text" />
+        app:layout_constraintEnd_toStartOf="@+id/reward1" />
+
+    <TextView
+        android:id="@+id/textView19"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="28dp"
+        android:text="Reward Earned"
+        android:textColor="#000000"
+        app:layout_constraintBaseline_toBaselineOf="@+id/textView6"
+        app:layout_constraintEnd_toStartOf="@+id/reward2" />
 
     <TextView
         android:id="@+id/textView2"

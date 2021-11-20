@@ -80,4 +80,13 @@ public class FileDatabaseMgr {
             }
         }).start();
     }
+    public void updateSize(SampleFile file, int size) {
+        file.size = size;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                dao.update(file);  //simple update seems not working
+            }
+        }).start();
+    }
 }

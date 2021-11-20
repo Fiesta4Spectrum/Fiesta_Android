@@ -13,10 +13,10 @@ public abstract class GlobalPrefMgr {
 
     // fields name
     public static final String DEVICE_ID = "id";
-    public static final String TASK = "latestTask";
-    public static final String BASE_GEN = "baseGeneration";
-    public static final String UPLOADED_INDEX = "numOfUploads";
-    public static final String TRAINED_INDEX = "numOfLocalTraining";
+    public static final String UPLOADED_INDEX_1 = "numOfUploads_1";
+    public static final String TRAINED_INDEX_1 = "numOfLocalTraining_1";
+    public static final String UPLOADED_INDEX_2 = "numOfUploads_2";
+    public static final String TRAINED_INDEX_2 = "numOfLocalTraining_2";
 
     private static SharedPreferences myPref = null;
     public static void init(Context context) {
@@ -38,10 +38,10 @@ public abstract class GlobalPrefMgr {
         }
     }
     public static void resetValueFields() {
-        setField(TASK, "null");
-        setField(BASE_GEN, -1);
-        setField(UPLOADED_INDEX, 0);
-        setField(TRAINED_INDEX, 0);
+        setField(UPLOADED_INDEX_1, 0);
+        setField(TRAINED_INDEX_1, 0);
+        setField(UPLOADED_INDEX_2, 0);
+        setField(TRAINED_INDEX_2, 0);
     }
     public static String getName() {
         return getFieldString(DEVICE_ID);

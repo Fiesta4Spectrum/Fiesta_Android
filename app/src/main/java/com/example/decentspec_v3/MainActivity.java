@@ -136,14 +136,60 @@ public class MainActivity extends AppCompatActivity {
                     public void onReceive(Context context, Intent intent) {
                         String task = intent.getStringExtra(TASK_NAME);
                         int version = intent.getIntExtra(TASK_GEN, -1);
-                        TextView taskName = findViewById(R.id.TaskAndVer);
-                        taskName.setText(task + " @ " + version);
+                        int worker = intent.getIntExtra(WORKER_ID, 0);
+                        TextView taskName = null;
+                        if (worker == 1)
+                            taskName = findViewById(R.id.TaskAndVer1);
+                        if (worker == 2)
+                            taskName = findViewById(R.id.TaskAndVer2);
+                        if (taskName != null)
+                            taskName.setText(task + " @ " + version);
                     }
                 }, new IntentFilter(FL_TASK_FILTER));
+        // update reward
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        double reward = intent.getDoubleExtra(REWARD, 0.0);
+                        int worker = intent.getIntExtra(WORKER_ID, 0);
+                        TextView rewardText = null;
+                        if (worker == 1)
+                            rewardText = findViewById(R.id.reward1);
+                        if (worker == 2)
+                            rewardText = findViewById(R.id.reward2);
+                        if (rewardText != null)
+                            rewardText.setText(String.format("%.2f", reward));
+                    }
+                }, new IntentFilter(FL_REWARD_FILTER));
+
+        // update uploadsuppression data
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                new BroadcastReceiver() {
+                    @SuppressLint("DefaultLocale")
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        int worker = intent.getIntExtra(WORKER_ID, 0);
+                        TextView up_sup;
+                        if (worker == 1) {
+                            up_sup = findViewById(R.id.up_sup_1);
+                            up_sup.setText(String.format("%d/%d",
+                                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.UPLOADED_INDEX_1),
+                                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.TRAINED_INDEX_1)));
+                        }
+
+                        if (worker == 2) {
+                            up_sup = findViewById(R.id.up_sup_2);
+                            up_sup.setText(String.format("%d/%d",
+                                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.UPLOADED_INDEX_2),
+                                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.TRAINED_INDEX_2)));
+                        }
+                    }
+                }, new IntentFilter(FL_UIUPDATE_FILTER));
 
         // first time app setup
         TextView device_id = findViewById(R.id.device_id);
-        device_id.setText(GlobalPrefMgr.getName());
+        device_id.setText("id: " + GlobalPrefMgr.getName());
     }
 
     private void switchRadioSerial(int state) {

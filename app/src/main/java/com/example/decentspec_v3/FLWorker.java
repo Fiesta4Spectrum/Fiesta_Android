@@ -36,6 +36,7 @@ import static com.example.decentspec_v3.IntentDirectory.*;
 public class FLWorker extends Thread {
     private final String TAG;
     private final Context context;
+    private final int id;
 
     private TrainingPara mTP;
     private HTTPAccessor mHTTP;
@@ -45,7 +46,8 @@ public class FLWorker extends Thread {
     private int oldVersion = -1;
 
     // Constructor
-    public FLWorker(String tag, Context context, String seedAddr) {
+    public FLWorker(String tag, Context context, String seedAddr, int id) {
+        this.id = id;
         this.TAG = tag;
         this.context = context;
         this.mHTTP = new HTTPAccessor(context, seedAddr);
@@ -90,6 +92,7 @@ public class FLWorker extends Thread {
             cleanup();
             return;
         }
+        updateReward();
         // ***** create model *****
         if (SHUFFLE_DATASET_AHEAD)
             Collections.shuffle(localTrainList);
@@ -113,7 +116,7 @@ public class FLWorker extends Thread {
                     return; // early return due to interrupt
                 }
 
-                ScoreListener mySL = new ScoreListener(mTrainingPara);
+                ScoreListener mySL = new ScoreListener(TAG, mTrainingPara);
                 localModel.setListeners(mySL);
                 localModel.fit(localDataset);
                 Log.d(TAG, "one epoch complete!");
@@ -128,8 +131,12 @@ public class FLWorker extends Thread {
             }
         }
         // ***** upload to miner *****
-        GlobalPrefMgr.setField(GlobalPrefMgr.TRAINED_INDEX,
-                GlobalPrefMgr.getFieldInt(GlobalPrefMgr.TRAINED_INDEX) + 1);
+        if (id == 1)
+            GlobalPrefMgr.setField(GlobalPrefMgr.TRAINED_INDEX_1,
+                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.TRAINED_INDEX_1) + 1);
+        if (id == 2)
+            GlobalPrefMgr.setField(GlobalPrefMgr.TRAINED_INDEX_2,
+                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.TRAINED_INDEX_2) + 1);
         double delta_loss = init_loss-end_loss;
         if ((! UPLOAD_SUPPRESSION) || (delta_loss >= 0)) {
             try {
@@ -143,8 +150,12 @@ public class FLWorker extends Thread {
                             HelperMethods.paramTable2stateDict(localModel.paramTable()))) {
                         oldVersion = mTrainingPara.BASE_GENERATION;
                         oldTask = mTrainingPara.SEED_NAME;
-                        GlobalPrefMgr.setField(GlobalPrefMgr.UPLOADED_INDEX,
-                                GlobalPrefMgr.getFieldInt(GlobalPrefMgr.UPLOADED_INDEX) + 1);
+                        if (id == 1)
+                            GlobalPrefMgr.setField(GlobalPrefMgr.UPLOADED_INDEX_1,
+                                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.UPLOADED_INDEX_1) + 1);
+                        if (id == 2)
+                            GlobalPrefMgr.setField(GlobalPrefMgr.UPLOADED_INDEX_2,
+                                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.UPLOADED_INDEX_2) + 1);
                         break;
                     }
                     if (i == mTrainingPara.MINER_LIST.size() - 1) {
@@ -158,13 +169,24 @@ public class FLWorker extends Thread {
             }
         }
         // end of ML cycle =================================================================
-        updateUINumbers();
+        updateNumbers();
+        updateReward();
         cleanup();
     }
 
-    private void updateUINumbers() {
-        Intent intent = new Intent(FL_UIUPDATE_FILTER);
+    private void updateNumbers() {
+        // update upload/trained
+        Intent intent = new Intent(FL_UIUPDATE_FILTER)
+                .putExtra(WORKER_ID, id);
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    }
+    private void updateReward() {
+        // update reward
+        Double reward = mHTTP.fetchReward(GlobalPrefMgr.getFieldString(GlobalPrefMgr.DEVICE_ID));
+        Intent reward_intent = new Intent(FL_REWARD_FILTER)
+                .putExtra(WORKER_ID, id)
+                .putExtra(REWARD, reward);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(reward_intent);
     }
     private void cleanup() { // call when interrupted
         // seems no specific things need to do
@@ -194,6 +216,10 @@ public class FLWorker extends Thread {
                 Log.d(TAG, "[fetchGlobal] seed node no connection");
                 return null;
             }
+            if (mTrainingPara.MINER_LIST == null || mTrainingPara.MINER_LIST.size() == 0) {
+                Log.d(TAG, "[fetchGlobal] empty miner list");
+                return null;
+            }
             for (int i = 0; i < mTrainingPara.MINER_LIST.size(); i++) {             // get ML context
                 if (mHTTP.getLatestGlobal(mTrainingPara.MINER_LIST.get(i), mTrainingPara))
                     break;
@@ -209,7 +235,8 @@ public class FLWorker extends Thread {
             // inform the main activity update of global model
             Intent intent = new Intent(FL_TASK_FILTER)
                     .putExtra(TASK_GEN, mTrainingPara.BASE_GENERATION)
-                    .putExtra(TASK_NAME, mTrainingPara.SEED_NAME);
+                    .putExtra(TASK_NAME, mTrainingPara.SEED_NAME)
+                    .putExtra(WORKER_ID, id);
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
             return mTrainingPara;
         }

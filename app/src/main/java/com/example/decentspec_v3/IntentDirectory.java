@@ -10,11 +10,14 @@ public class IntentDirectory {
     public static final String FL_STATE_FILTER = "service.fl.state";
     public static final String FL_TASK_FILTER = "service.fl.task_update";
     public static final String FL_UIUPDATE_FILTER = "service.fl.ui_update";
+    public static final String FL_REWARD_FILTER = "service.fl.reward";
 
     public static final String STATE_FIELD = "state";
     public static final String GPS_LATI_FIELD = "lati";
     public static final String GPS_LONGI_FIELD = "longi";
     public static final String TASK_GEN = "generation";
     public static final String TASK_NAME = "name";
+    public static final String WORKER_ID = "worker";
+    public static final String REWARD = "reward";
 
 }

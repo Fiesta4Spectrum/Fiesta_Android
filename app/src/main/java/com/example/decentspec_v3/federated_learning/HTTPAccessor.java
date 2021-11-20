@@ -30,6 +30,7 @@ public class HTTPAccessor {
                                          // no need to add lock since only one writer and one reader
     private volatile boolean responded;
     private ArrayList<String> minerHistory = null;
+    private double reward = 0.0;
 
     public HTTPAccessor(Context context, String seedAddr) {
         this.HTTPQueue = Volley.newRequestQueue(context);
@@ -70,6 +71,37 @@ public class HTTPAccessor {
         HTTPQueue.add(stringRequest);
         join();
         return tp.MINER_LIST != null;
+    }
+
+    public double fetchReward(String myId) {
+        threadDone = false;
+        responded = false;
+        reward = 0.0;
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, SEED_ADDR + API_GET_REWARD + myId,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            JSONObject jsonRsp = new JSONObject(response);
+                            reward = jsonRsp.getDouble("reward");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        threadDone = true;
+                        responded = true;
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("HTTP", error.toString());
+                        threadDone = true;
+                        responded = false;
+                    }
+                });
+        HTTPQueue.add(stringRequest);
+        join();
+        return reward;
     }
 
     public boolean getLatestGlobal(String serverAddr, TrainingPara tp) {

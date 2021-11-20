@@ -81,11 +81,11 @@ public class FLManagerService extends Service {
     private void doTheWork() {
         /* find the cached data in local storage*/
         if (ENABLE_WORKER1) {
-            FLWorker_1 = new FLWorker("tv_training", context, SEED_NODE_1);
+            FLWorker_1 = new FLWorker("worker_1", context, SEED_NODE_1, 1);
             FLWorker_1.start();
         }
         if (ENABLE_WORKER2) {
-            FLWorker_2 = new FLWorker("lte_training", context, SEED_NODE_2);
+            FLWorker_2 = new FLWorker("worker_2", context, SEED_NODE_2, 2);
             FLWorker_2.start();
         }
     }

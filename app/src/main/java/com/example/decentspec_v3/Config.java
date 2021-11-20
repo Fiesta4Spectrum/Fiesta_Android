@@ -5,7 +5,7 @@ public class Config {
     public static final int DEVICE_ID_LENGTH = 10;
     public static final boolean ALWAYS_ON = true;
     public static final boolean ENABLE_WORKER1 = true;
-    public static final boolean ENABLE_WORKER2 = false;
+    public static final boolean ENABLE_WORKER2 = true;
 
     // sampling related
     public static final int GPS_UPDATE_INTERVAL = 1000; // 1s update
@@ -28,6 +28,7 @@ public class Config {
     public static final String API_GET_MINER = "/miner_peers";
     public static final String API_SEND_LOCAL = "/new_transaction";
     public static final String API_GET_GLOBAL = "/global_model";
+    public static final String API_GET_REWARD = "/reward?id=";
 
     // sample paras
     public static final String SAMPLE_START_SIGNAL = "START32767";
