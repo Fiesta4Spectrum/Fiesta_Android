@@ -34,6 +34,7 @@
         android:layout_height="wrap_content"
         android:text="Upload Suppression"
         android:textColor="#000000"
+        android:textSize="12sp"
         app:layout_constraintStart_toStartOf="@+id/textView3"
         app:layout_constraintTop_toBottomOf="@+id/textView3" />
 
@@ -295,6 +296,7 @@
         android:layout_height="wrap_content"
         android:text="Upload Suppression"
         android:textColor="#000000"
+        android:textSize="12sp"
         app:layout_constraintStart_toStartOf="@+id/textView14"
         app:layout_constraintTop_toBottomOf="@+id/textView14" />
 
@@ -391,21 +393,24 @@
         android:id="@+id/device_id"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
         android:text="ID Not Generated Yet"
         android:textAlignment="viewEnd"
         android:textSize="12sp"
         android:textStyle="italic"
         app:layout_constraintBaseline_toBaselineOf="@+id/textView7"
-        app:layout_constraintEnd_toEndOf="@+id/textView8" />
+        app:layout_constraintStart_toEndOf="@+id/textView7" />
 
     <LinearLayout
         android:id="@+id/Broader_dataset"
         android:layout_width="375dp"
-        android:layout_height="114dp"
+        android:layout_height="0dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
         android:background="@drawable/border"
+        app:layout_constraintBottom_toTopOf="@+id/divider5"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView11">
@@ -428,25 +433,25 @@
         android:id="@+id/divider5"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginBottom="8dp"
         android:background="?android:attr/listDivider"
+        app:layout_constraintBottom_toTopOf="@+id/textView21"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/Broader_dataset" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/textView21"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginBottom="10dp"
         android:text="Wisconsin Wireless and NetworkinG Systems (WiNGS) Laboratory"
         android:textColor="#AFAFAF"
         android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.495"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/divider5" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <ImageButton
         android:id="@+id/help_serial"
@@ -492,6 +497,7 @@
         android:layout_marginEnd="28dp"
         android:text="Reward Earned"
         android:textColor="#000000"
+        android:textSize="12sp"
         app:layout_constraintBaseline_toBaselineOf="@+id/textView16"
         app:layout_constraintEnd_toStartOf="@+id/reward1" />
 
@@ -502,6 +508,7 @@
         android:layout_marginEnd="28dp"
         android:text="Reward Earned"
         android:textColor="#000000"
+        android:textSize="12sp"
         app:layout_constraintBaseline_toBaselineOf="@+id/textView6"
         app:layout_constraintEnd_toStartOf="@+id/reward2" />
 

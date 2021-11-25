@@ -72,6 +72,8 @@ public class FileAccessor {
             return null;
         }
         inList = Arrays.copyOfRange(doubleList, 0, 2);
+        if (inList[0] == 0.0 || inList[1] == 0.0)
+            return null;
         double[] outListResource = Arrays.copyOfRange(doubleList, 3, 30 + 3);
         outList = MyUtils.powerMerge(outListResource, outListResource.length);
         return standardize(inList, outList, tp);

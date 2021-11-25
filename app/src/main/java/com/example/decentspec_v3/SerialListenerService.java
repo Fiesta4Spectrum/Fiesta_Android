@@ -114,6 +114,8 @@ public class SerialListenerService extends Service {
                 mNotificationMgr.notify(NOTI_ID, mNotificationBuilder.build());
                 appToast("one device detected");
                 mSampleInstance = new OneTimeSample(myFirstUSB);
+            } else {
+                appToast("no USB device detected");
             }
         }
         return START_NOT_STICKY;
@@ -364,7 +366,7 @@ public class SerialListenerService extends Service {
                             }
                             startIndex = longBuffer.indexOf(SAMPLE_START_SIGNAL);
                             int endIndex = longBuffer.indexOf(SAMPLE_END_SIGNAL);
-                            Log.d(TAG, String.format("startIndex %d, endIndex %d", startIndex, endIndex));
+//                            Log.d(TAG, String.format("startIndex %d, endIndex %d", startIndex, endIndex));
                             if (startIndex >= 0 && endIndex > 0 && startIndex < endIndex) {   // if both exist
                                 new_line = longBuffer.substring(startIndex, endIndex  + SAMPLE_END_SIGNAL.length());
                                 longBuffer = longBuffer.substring(endIndex + SAMPLE_END_SIGNAL.length());
