@@ -64,10 +64,8 @@ public class MainActivity extends AppCompatActivity {
         if (Config.ALWAYS_ON)
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         GlobalPrefMgr.init(this);
-        if (Config.USE_DUMMY_DATASET) {
-            // force to reset when use dummy dataset
-            GlobalPrefMgr.resetValueFields();
-        }
+        // force to reset
+        GlobalPrefMgr.resetValueFields();
 
         serial_switch = findViewById(R.id.serial_switch);
         FL_switch = findViewById(R.id.FL_switch);

@@ -54,7 +54,8 @@ public class FileAccessor {
             e.printStackTrace();
         }
         // use a smaller training set
-        trainList = trainList.subList(0, MAX_LOCAL_SET_SIZE);
+        if (trainList.size() > MAX_LOCAL_SET_SIZE)
+            trainList = trainList.subList(0, MAX_LOCAL_SET_SIZE);
 
         tp.DATASET_SIZE = trainList.size();
         tp.DATASET_NAME = fileName;

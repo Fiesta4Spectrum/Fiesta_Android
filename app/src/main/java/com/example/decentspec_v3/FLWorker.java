@@ -232,8 +232,12 @@ public class FLWorker extends Thread {
                 }
                 return null;
             }
-            if (mTrainingPara.MINER_LIST == null || mTrainingPara.MINER_LIST.size() == 0) {
+            if (mTrainingPara.MINER_LIST == null) {
                 Log.d(TAG, "[fetchGlobal] empty miner list");
+                return null;
+            }
+            if (mTrainingPara.MINER_LIST.size() == 0) {
+                Log.d(TAG, "[fetchGlobal] no online miner");
                 return null;
             }
             for (int i = 0; i < mTrainingPara.MINER_LIST.size(); i++) {             // get ML context
@@ -287,6 +291,8 @@ public class FLWorker extends Thread {
         }
         private SampleFile dataReady(TrainingPara tp) {        // need a usable training data
             // clear the history train data file list
+            if (tp == null)
+                return null;
             SampleFile targetFile = null;
             if (USE_DUMMY_DATASET)
                 return SampleFile.getDummyFile();   // use R.raw.gps_power
@@ -301,6 +307,8 @@ public class FLWorker extends Thread {
             return null;
         }
         public boolean rightSampleRange(SampleFile file, TrainingPara tp) {
+            if ((tp == null) || (tp.SAMPLE_CENTER_FREQ == null) || (tp.SAMPLE_BANDWIDTH == null))
+                return false;
             String expectingFileName = MyUtils.genFileName(tp.SAMPLE_CENTER_FREQ, tp.SAMPLE_BANDWIDTH);
             return expectingFileName.equals(file.fileName);
         }
