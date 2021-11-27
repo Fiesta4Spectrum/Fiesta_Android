@@ -20,6 +20,7 @@ import org.nd4j.shade.jackson.core.JsonProcessingException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import static com.example.decentspec_v3.Config.*;
 
@@ -51,6 +52,8 @@ public class HTTPAccessor {
                             for (int i=0; i < peers.length(); i++) {
                                 tp.MINER_LIST.add(peers.getString(i));
                             }
+                            if (SHUFFLE_MINER_LIST)
+                                Collections.shuffle(tp.MINER_LIST);
                             minerHistory = tp.MINER_LIST;
                         } catch (JSONException e) {
                             e.printStackTrace();

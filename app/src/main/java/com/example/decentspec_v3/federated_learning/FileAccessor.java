@@ -54,7 +54,8 @@ public class FileAccessor {
             e.printStackTrace();
         }
         // use a smaller training set
-        trainList = trainList.subList(0, MAX_LOCAL_SET_SIZE);
+        if (trainList.size() > MAX_LOCAL_SET_SIZE)
+            trainList = trainList.subList(0, MAX_LOCAL_SET_SIZE);
 
         tp.DATASET_SIZE = trainList.size();
         tp.DATASET_NAME = fileName;
@@ -72,6 +73,8 @@ public class FileAccessor {
             return null;
         }
         inList = Arrays.copyOfRange(doubleList, 0, 2);
+        if (inList[0] == 0.0 || inList[1] == 0.0)
+            return null;
         double[] outListResource = Arrays.copyOfRange(doubleList, 3, 30 + 3);
         outList = MyUtils.powerMerge(outListResource, outListResource.length);
         return standardize(inList, outList, tp);

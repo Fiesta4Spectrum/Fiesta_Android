@@ -7,7 +7,9 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.os.BatteryManager;
+import android.os.Handler;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -44,6 +46,7 @@ public class FLWorker extends Thread {
 
     private String oldTask = "null";
     private int oldVersion = -1;
+    private boolean notified = false;
 
     // Constructor
     public FLWorker(String tag, Context context, String seedAddr, int id) {
@@ -54,6 +57,15 @@ public class FLWorker extends Thread {
         this.mTrigger = new TrainingTrigger();
     }
 
+    private void appToast(String content) {
+        Handler mainHandler = new Handler(context.getMainLooper());
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(context.getApplicationContext(), content, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
     // thread loop
     @Override
     public void run() {
@@ -214,10 +226,18 @@ public class FLWorker extends Thread {
             TrainingPara mTrainingPara = new TrainingPara();                        // ML context info from remote
             if (! mHTTP.fetchMinerList(mTrainingPara)) {                    // get minerlist
                 Log.d(TAG, "[fetchGlobal] seed node no connection");
+                if (! notified) {
+                    appToast("Seed Server " + id + " Offline");
+                    notified = true;
+                }
                 return null;
             }
-            if (mTrainingPara.MINER_LIST == null || mTrainingPara.MINER_LIST.size() == 0) {
+            if (mTrainingPara.MINER_LIST == null) {
                 Log.d(TAG, "[fetchGlobal] empty miner list");
+                return null;
+            }
+            if (mTrainingPara.MINER_LIST.size() == 0) {
+                Log.d(TAG, "[fetchGlobal] no online miner");
                 return null;
             }
             for (int i = 0; i < mTrainingPara.MINER_LIST.size(); i++) {             // get ML context
@@ -271,6 +291,8 @@ public class FLWorker extends Thread {
         }
         private SampleFile dataReady(TrainingPara tp) {        // need a usable training data
             // clear the history train data file list
+            if (tp == null)
+                return null;
             SampleFile targetFile = null;
             if (USE_DUMMY_DATASET)
                 return SampleFile.getDummyFile();   // use R.raw.gps_power
@@ -285,6 +307,8 @@ public class FLWorker extends Thread {
             return null;
         }
         public boolean rightSampleRange(SampleFile file, TrainingPara tp) {
+            if ((tp == null) || (tp.SAMPLE_CENTER_FREQ == null) || (tp.SAMPLE_BANDWIDTH == null))
+                return false;
             String expectingFileName = MyUtils.genFileName(tp.SAMPLE_CENTER_FREQ, tp.SAMPLE_BANDWIDTH);
             return expectingFileName.equals(file.fileName);
         }
