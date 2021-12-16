@@ -24,8 +24,8 @@ public class Config {
     public static final boolean UPLOAD_SUPPRESSION = true;
 
     // api
-    public static final String SEED_NODE_1 = "http://api.decentspec.org:5000";
-    public static final String SEED_NODE_2 = "http://api.decentspec.org:5001";
+    public static final String SEED_NODE_1 = "http://api.decentspec.org:8000";
+    public static final String SEED_NODE_2 = "http://api.decentspec.org:8001";
     public static final String API_GET_MINER = "/miner_peers";
     public static final String API_SEND_LOCAL = "/new_transaction";
     public static final String API_GET_GLOBAL = "/global_model";

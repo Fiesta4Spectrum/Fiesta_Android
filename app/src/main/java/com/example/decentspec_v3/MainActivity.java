@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         GlobalPrefMgr.init(this);
         // force to reset
-        GlobalPrefMgr.resetValueFields();
+        // GlobalPrefMgr.resetValueFields();
 
         serial_switch = findViewById(R.id.serial_switch);
         FL_switch = findViewById(R.id.FL_switch);
@@ -265,10 +265,10 @@ public class MainActivity extends AppCompatActivity {
         showDialog("A compatible spectrum sensing board is expected to connect to this device, with which data used to fuel local training will be gathered.\nThe Serial Listener will stay in background and package each sampling into files.");
     }
     public void onPressHelpFL(View view) {
-        showDialog("Local training starts only when the device is connected to WiFi network with power cable plugged, considering its bandwidth and power consuming.\nAfter that, the trained local model will be upload to miner network.");
+        showDialog("Local training starts only when the device is connected to WiFi network with power cable plugged, considering its power consuming.\nAfter that, the trained local model will be upload to miner network.");
     }
     public void onPressHelpData(View view) {
-        showDialog("You could view records of your local sampled datasets here.\n\"Receiving\" means it is under transmission through the USB cable.\n\"Training\" means it is under local training");
+        showDialog("You could view records of your local sampled datasets here.\nFile name is defined by center frequency and bandwidth. You could check the number of sampled data in each file below.");
     }
     private void showDialog(String content) {
         AlertDialog dialog = new AlertDialog.Builder(this)

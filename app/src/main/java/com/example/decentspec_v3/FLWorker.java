@@ -204,6 +204,16 @@ public class FLWorker extends Thread {
         // seems no specific things need to do
     }
 
+    private void rstSuppressionRecords() {
+        if (id == 1) {
+            GlobalPrefMgr.setField(GlobalPrefMgr.TRAINED_INDEX_1, 0);
+            GlobalPrefMgr.setField(GlobalPrefMgr.UPLOADED_INDEX_1, 0);
+        }
+        if (id == 2) {
+            GlobalPrefMgr.setField(GlobalPrefMgr.TRAINED_INDEX_2, 0);
+            GlobalPrefMgr.setField(GlobalPrefMgr.UPLOADED_INDEX_2, 0);
+        }
+    }
     // Training trigger
     private class TrainingTrigger {
 
@@ -268,8 +278,10 @@ public class FLWorker extends Thread {
                 return false;
             String newTask = mtp.SEED_NAME;
             int newVersion = mtp.BASE_GENERATION;
-            if (! oldTask.equals(newTask))
+            if (! oldTask.equals(newTask)) {
+                rstSuppressionRecords();
                 return true;
+            }
             if (newVersion > oldVersion)
                 return true;
             return false;
