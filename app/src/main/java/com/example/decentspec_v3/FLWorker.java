@@ -55,6 +55,10 @@ public class FLWorker extends Thread {
         this.context = context;
         this.mHTTP = new HTTPAccessor(context, seedAddr);
         this.mTrigger = new TrainingTrigger();
+        this.oldTask = GlobalPrefMgr.getFieldString(GlobalPrefMgr.LAST_TASK_NAME[id]);
+        if (this.oldTask == null)
+            this.oldTask = "null";
+
     }
 
     private void appToast(String content) {
@@ -143,12 +147,8 @@ public class FLWorker extends Thread {
             }
         }
         // ***** upload to miner *****
-        if (id == 1)
-            GlobalPrefMgr.setField(GlobalPrefMgr.TRAINED_INDEX_1,
-                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.TRAINED_INDEX_1) + 1);
-        if (id == 2)
-            GlobalPrefMgr.setField(GlobalPrefMgr.TRAINED_INDEX_2,
-                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.TRAINED_INDEX_2) + 1);
+         GlobalPrefMgr.setField(GlobalPrefMgr.TRAINED_INDEX[id],
+                 GlobalPrefMgr.getFieldInt(GlobalPrefMgr.TRAINED_INDEX[id]) + 1);
         double delta_loss = init_loss-end_loss;
         if ((! UPLOAD_SUPPRESSION) || (delta_loss >= 0)) {
             try {
@@ -162,12 +162,9 @@ public class FLWorker extends Thread {
                             HelperMethods.paramTable2stateDict(localModel.paramTable()))) {
                         oldVersion = mTrainingPara.BASE_GENERATION;
                         oldTask = mTrainingPara.SEED_NAME;
-                        if (id == 1)
-                            GlobalPrefMgr.setField(GlobalPrefMgr.UPLOADED_INDEX_1,
-                                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.UPLOADED_INDEX_1) + 1);
-                        if (id == 2)
-                            GlobalPrefMgr.setField(GlobalPrefMgr.UPLOADED_INDEX_2,
-                                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.UPLOADED_INDEX_2) + 1);
+                        GlobalPrefMgr.setField(GlobalPrefMgr.UPLOADED_INDEX[id],
+                                GlobalPrefMgr.getFieldInt(GlobalPrefMgr.UPLOADED_INDEX[id]) + 1);
+                        GlobalPrefMgr.setField(GlobalPrefMgr.LAST_TASK_NAME[id], oldTask);
                         break;
                     }
                     if (i == mTrainingPara.MINER_LIST.size() - 1) {
@@ -205,14 +202,8 @@ public class FLWorker extends Thread {
     }
 
     private void rstSuppressionRecords() {
-        if (id == 1) {
-            GlobalPrefMgr.setField(GlobalPrefMgr.TRAINED_INDEX_1, 0);
-            GlobalPrefMgr.setField(GlobalPrefMgr.UPLOADED_INDEX_1, 0);
-        }
-        if (id == 2) {
-            GlobalPrefMgr.setField(GlobalPrefMgr.TRAINED_INDEX_2, 0);
-            GlobalPrefMgr.setField(GlobalPrefMgr.UPLOADED_INDEX_2, 0);
-        }
+        GlobalPrefMgr.setField(GlobalPrefMgr.TRAINED_INDEX[id], 0);
+        GlobalPrefMgr.setField(GlobalPrefMgr.UPLOADED_INDEX[id], 0);
     }
     // Training trigger
     private class TrainingTrigger {

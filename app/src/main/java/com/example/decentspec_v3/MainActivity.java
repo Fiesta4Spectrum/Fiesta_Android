@@ -172,15 +172,15 @@ public class MainActivity extends AppCompatActivity {
                         if (worker == 1) {
                             up_sup = findViewById(R.id.up_sup_1);
                             up_sup.setText(String.format("%d/%d",
-                                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.UPLOADED_INDEX_1),
-                                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.TRAINED_INDEX_1)));
+                                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.UPLOADED_INDEX[1]),
+                                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.TRAINED_INDEX[1])));
                         }
 
                         if (worker == 2) {
                             up_sup = findViewById(R.id.up_sup_2);
                             up_sup.setText(String.format("%d/%d",
-                                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.UPLOADED_INDEX_2),
-                                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.TRAINED_INDEX_2)));
+                                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.UPLOADED_INDEX[2]),
+                                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.TRAINED_INDEX[2])));
                         }
                     }
                 }, new IntentFilter(FL_UIUPDATE_FILTER));
