@@ -281,6 +281,9 @@ public class FLWorker extends Thread {
         private boolean wifiReady() {       // need to be under usable wifi
             Network curNetwork = mConnMgr.getActiveNetwork();
             NetworkCapabilities caps = mConnMgr.getNetworkCapabilities(curNetwork);
+            if ((curNetwork == null) || (caps == null)) {
+                return false;
+            }
             return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) &&
                     caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
         }

@@ -314,6 +314,7 @@
         android:id="@+id/FLStateGroup"
         android:layout_width="300dp"
         android:layout_height="33dp"
+        android:layout_marginTop="2dp"
         android:checkedButton="@+id/RB_ML_idle"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="@+id/serialStateGroup"
