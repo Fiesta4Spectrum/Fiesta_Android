@@ -38,8 +38,14 @@ public class HTTPAccessor {
         this.SEED_ADDR = seedAddr;
     }
 
+    public void testNull(TrainingPara tp) {
+        if (tp.MINER_LIST != null)
+            Log.d("HTTP", "miner_list not null");
+        else Log.d("HTTP", "miner_list is null");
+    }
+
     public boolean fetchMinerList(TrainingPara tp) {
-        tp.MINER_LIST = new ArrayList<>();
+        tp.MINER_LIST = null;
         threadDone = false;
         responded = false;
         StringRequest stringRequest = new StringRequest(Request.Method.GET, SEED_ADDR + API_GET_MINER,
@@ -50,6 +56,8 @@ public class HTTPAccessor {
                             JSONObject jsonRsp = new JSONObject(response);
                             JSONArray peers = jsonRsp.getJSONArray("peers");
                             for (int i=0; i < peers.length(); i++) {
+                                if (tp.MINER_LIST == null)
+                                    tp.MINER_LIST = new ArrayList<>();
                                 tp.MINER_LIST.add(peers.getString(i));
                             }
                             if (SHUFFLE_MINER_LIST)
