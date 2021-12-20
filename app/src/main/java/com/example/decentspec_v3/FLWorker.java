@@ -233,33 +233,36 @@ public class FLWorker extends Thread {
                 }
                 return null;
             }
-            if (mTrainingPara.MINER_LIST == null) {
+
+            try {
+                if (mTrainingPara.MINER_LIST.size() == 0) {
+                    Log.d(TAG, "[fetchGlobal] no online miner");
+                    return null;
+                } else {
+                    for (int i = 0; i < mTrainingPara.MINER_LIST.size(); i++) {             // get ML context
+                        if (mHTTP.getLatestGlobal(mTrainingPara.MINER_LIST.get(i), mTrainingPara))
+                            break;
+                        if (i == mTrainingPara.MINER_LIST.size() - 1) {
+                            Log.d(TAG, "[fetchGlobal] miner node no connection");
+                            return null;
+                        }
+                    }
+                    if (!newGlobalSniffed(mTrainingPara)) {
+                        Log.d(TAG, "[fetchGlobal] there is no update on the global model");
+                        return null;
+                    }
+                    // inform the main activity update of global model
+                    Intent intent = new Intent(FL_TASK_FILTER)
+                            .putExtra(TASK_GEN, mTrainingPara.BASE_GENERATION)
+                            .putExtra(TASK_NAME, mTrainingPara.SEED_NAME)
+                            .putExtra(WORKER_ID, id);
+                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                    return mTrainingPara;
+                }
+            } catch (NullPointerException e) {
                 Log.d(TAG, "[fetchGlobal] empty miner list");
                 return null;
             }
-            if (mTrainingPara.MINER_LIST.size() == 0) {
-                Log.d(TAG, "[fetchGlobal] no online miner");
-                return null;
-            }
-            for (int i = 0; i < mTrainingPara.MINER_LIST.size(); i++) {             // get ML context
-                if (mHTTP.getLatestGlobal(mTrainingPara.MINER_LIST.get(i), mTrainingPara))
-                    break;
-                if (i == mTrainingPara.MINER_LIST.size() - 1) {
-                    Log.d(TAG, "[fetchGlobal] miner node no connection");
-                    return null;
-                }
-            }
-            if (! newGlobalSniffed(mTrainingPara)) {
-                Log.d(TAG, "[fetchGlobal] there is no update on the global model");
-                return null;
-            }
-            // inform the main activity update of global model
-            Intent intent = new Intent(FL_TASK_FILTER)
-                    .putExtra(TASK_GEN, mTrainingPara.BASE_GENERATION)
-                    .putExtra(TASK_NAME, mTrainingPara.SEED_NAME)
-                    .putExtra(WORKER_ID, id);
-            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-            return mTrainingPara;
         }
         // private components:
         private boolean newGlobalSniffed(TrainingPara mtp) {
@@ -281,11 +284,12 @@ public class FLWorker extends Thread {
         private boolean wifiReady() {       // need to be under usable wifi
             Network curNetwork = mConnMgr.getActiveNetwork();
             NetworkCapabilities caps = mConnMgr.getNetworkCapabilities(curNetwork);
-            if ((curNetwork == null) || (caps == null)) {
+            try {
+                return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) &&
+                        caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
+            } catch (NullPointerException e) {
                 return false;
             }
-            return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) &&
-                    caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
         }
         private boolean chargerReady() {    // need to be under charging
             if (DEADLY_TRAINER)
