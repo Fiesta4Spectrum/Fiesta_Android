@@ -74,9 +74,9 @@ public class HTTPAccessor {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Log.d("HTTP", error.toString());
+                        tp.MINER_LIST = minerHistory;
                         threadDone = true;
                         responded = false;
-                        tp.MINER_LIST = minerHistory;
                     }
                 });
         HTTPQueue.add(stringRequest);
