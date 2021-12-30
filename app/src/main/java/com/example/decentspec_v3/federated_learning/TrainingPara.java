@@ -29,7 +29,7 @@ public class TrainingPara {
 
     public Integer DATASET_SIZE;
     public String DATASET_NAME;
-    public ArrayList<String> MINER_LIST;
+    public ArrayList<String> MINER_LIST = new ArrayList<>();
     public Integer BASE_GENERATION;
     public String SEED_NAME;
     public Integer SAMPLE_CENTER_FREQ;

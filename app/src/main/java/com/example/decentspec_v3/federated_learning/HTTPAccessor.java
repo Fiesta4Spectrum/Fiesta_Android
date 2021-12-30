@@ -30,7 +30,7 @@ public class HTTPAccessor {
     private volatile boolean threadDone; // thread flag need to be volatile to avoid cache
                                          // no need to add lock since only one writer and one reader
     private volatile boolean responded;
-    private ArrayList<String> minerHistory = null;
+    private ArrayList<String> minerHistory = new ArrayList<>();
     private double reward = 0.0;
 
     public HTTPAccessor(Context context, String seedAddr) {
@@ -45,7 +45,7 @@ public class HTTPAccessor {
     }
 
     public boolean fetchMinerList(TrainingPara tp) {
-        tp.MINER_LIST = null;
+        tp.MINER_LIST = new ArrayList<>();
         threadDone = false;
         responded = false;
         StringRequest stringRequest = new StringRequest(Request.Method.GET, SEED_ADDR + API_GET_MINER,
@@ -81,7 +81,7 @@ public class HTTPAccessor {
                 });
         HTTPQueue.add(stringRequest);
         join();
-        return tp.MINER_LIST != null;
+        return tp.MINER_LIST.size() != 0;
     }
 
     public double fetchReward(String myId) {
