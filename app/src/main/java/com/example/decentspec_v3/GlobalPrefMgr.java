@@ -23,15 +23,16 @@ public abstract class GlobalPrefMgr {
             synchronized (GlobalPrefMgr.class) {
                 if (myPref == null) {
                     myPref = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
-                    initFields();
                 }
             }
         }
     }
-    private static void initFields() {
+    public static void initFields(String device_id) {
         if (! myPref.contains(DEVICE_ID)) {     // if the pref data base is fresh
             Log.d("GlobalPref", "it is a new global preference");
-            setField(DEVICE_ID, genName(DEVICE_ID_LENGTH));
+            if (device_id.equals(""))
+                setField(DEVICE_ID, genName(DEVICE_ID_LENGTH));
+            else setField(DEVICE_ID, device_id);
             // init the other fields
             resetValueFields();
         }

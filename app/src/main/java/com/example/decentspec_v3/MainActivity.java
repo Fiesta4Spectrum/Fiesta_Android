@@ -17,9 +17,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.telephony.gsm.GsmCellLocation;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -64,8 +67,13 @@ public class MainActivity extends AppCompatActivity {
         if (Config.ALWAYS_ON)
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         GlobalPrefMgr.init(this);
-        // force to reset
-        // GlobalPrefMgr.resetValueFields();
+        if (GlobalPrefMgr.getName() == null)
+            usrInputDeviceId();
+        else {
+            //display id
+            TextView device_id = findViewById(R.id.device_id);
+            device_id.setText("id: " + GlobalPrefMgr.getName());
+        }
 
         serial_switch = findViewById(R.id.serial_switch);
         FL_switch = findViewById(R.id.FL_switch);
@@ -184,10 +192,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 }, new IntentFilter(FL_UIUPDATE_FILTER));
-
-        // first time app setup
-        TextView device_id = findViewById(R.id.device_id);
-        device_id.setText("id: " + GlobalPrefMgr.getName());
     }
 
     private void switchRadioSerial(int state) {
@@ -279,7 +283,35 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }).show();
     }
+    private void usrInputDeviceId() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Give me a unique name (num and alphabet)")
+        .setCancelable(false);
 
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                GlobalPrefMgr.initFields(input.getText().toString());
+                TextView device_id = findViewById(R.id.device_id);
+                device_id.setText("id: " + GlobalPrefMgr.getName());
+            }
+        });
+        builder.setNegativeButton("Random", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                GlobalPrefMgr.initFields("");
+                TextView device_id = findViewById(R.id.device_id);
+                device_id.setText("id: " + GlobalPrefMgr.getName());
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+    }
 
     // utility methods
     @SuppressWarnings("deprecation")
