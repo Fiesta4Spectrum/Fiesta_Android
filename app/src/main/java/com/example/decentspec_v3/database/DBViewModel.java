@@ -9,7 +9,7 @@ import java.util.List;
 
 // model viewer for activity to show database information lively
 public class DBViewModel extends AndroidViewModel {
-    private FileDatabaseMgr myDBMgr;
+    private final FileDatabaseMgr myDBMgr;
     public DBViewModel(Application app) {
         super(app);
         myDBMgr = new FileDatabaseMgr(app);

@@ -168,7 +168,7 @@ public class FileAccessor {
     private String array2string(double[] arr) {
         String ret = "";
         for (int i = 0; i<arr.length; i++) {
-            ret = ret + String.valueOf(arr[i]) + " ";
+            ret = ret + arr[i] + " ";
         }
         return ret;
     }

@@ -84,7 +84,7 @@ public class HelperMethods {
     public static String rename_pt2sd(String pt_name, int layerNum) {  // return a new string
         boolean isWeight = pt_name.contains("_W");
         boolean isBias = pt_name.contains("_b");
-        String order = new String(pt_name);
+        String order = pt_name;
         if (isWeight == isBias) {
             return null;
         }
@@ -103,7 +103,7 @@ public class HelperMethods {
     public static String rename_sd2pt(String sd_name, int layerNum) {  // return a new string
         boolean isWeight = sd_name.contains(".weight");
         boolean isBias = sd_name.contains(".bias");
-        String order = new String(sd_name);
+        String order = sd_name;
         if (isWeight == isBias) {
             return null;
         }

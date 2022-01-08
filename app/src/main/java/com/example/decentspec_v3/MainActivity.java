@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     // private fields
 
     // const
-    private String TAG = "MainActivity";
+    private final String TAG = "MainActivity";
 
     // UI component
     @SuppressLint("UseSwitchCompatOrMaterialCode")

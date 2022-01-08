@@ -7,7 +7,9 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -32,11 +34,7 @@ public class GPSTracker {
         List<String> providerList = mLocationManager.getProviders(true);
         if (! providerList.contains(LocationManager.GPS_PROVIDER))
             avail = false;
-        else if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            avail = false;
-        }
-        else
-            avail = true;
+        else avail = ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
     public boolean setupGPSListener(int interval_ms) {
@@ -55,6 +53,20 @@ public class GPSTracker {
                     curLocation = location;
                     broadcastGPS();
                 }
+            }
+            @Override
+            public void onProviderEnabled(@NonNull String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(@NonNull String provider) {
+
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
             }
         };
         mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_ms, 0, mLocationListener);

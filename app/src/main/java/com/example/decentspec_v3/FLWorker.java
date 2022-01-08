@@ -41,8 +41,8 @@ public class FLWorker extends Thread {
     private final int id;
 
     private TrainingPara mTP;
-    private HTTPAccessor mHTTP;
-    private TrainingTrigger mTrigger;
+    private final HTTPAccessor mHTTP;
+    private final TrainingTrigger mTrigger;
 
     private String oldTask = "null";
     private int oldVersion = -1;
@@ -276,9 +276,7 @@ public class FLWorker extends Thread {
                 rstSuppressionRecords();
                 return true;
             }
-            if (newVersion > oldVersion)
-                return true;
-            return false;
+            return newVersion > oldVersion;
         }
 
         private boolean wifiReady() {       // need to be under usable wifi
