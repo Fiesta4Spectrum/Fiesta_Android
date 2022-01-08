@@ -1,12 +1,14 @@
 package com.example.decentspec_v3;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -227,6 +229,9 @@ public class MainActivity extends AppCompatActivity {
             }
             /*start foreground service*/
             Intent runMyService = new Intent(this, SerialListenerService.class);
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION},
+                    10);
             runMyService.setAction(START_ACTION);
             startForegroundService(runMyService);
             serial_switch.setChecked(ifMyServiceRunning(SerialListenerService.class));

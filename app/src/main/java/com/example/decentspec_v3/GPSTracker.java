@@ -32,8 +32,9 @@ public class GPSTracker {
         List<String> providerList = mLocationManager.getProviders(true);
         if (! providerList.contains(LocationManager.GPS_PROVIDER))
             avail = false;
-        else if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+        else if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             avail = false;
+        }
         else
             avail = true;
     }
