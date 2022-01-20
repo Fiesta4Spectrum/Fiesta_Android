@@ -13,6 +13,7 @@ public abstract class GlobalPrefMgr {
 
     // fields name
     public static final String DEVICE_ID = "id";
+    public static final String QUICK_TRAIN_ENABLE = "quickTrain";
     public static final String[] UPLOADED_INDEX = {"numOfUploads_0", "numOfUploads_1", "numOfUploads_2"};
     public static final String[] TRAINED_INDEX = {"numOfLocalTraining_0", "numOfLocalTraining_1", "numOfLocalTraining_2"};
     public static final String[] LAST_TASK_NAME = {"name_0", "name_1", "name_2"};
@@ -27,21 +28,33 @@ public abstract class GlobalPrefMgr {
             }
         }
     }
-    public static void initFields(String device_id) {
+    public static void initDeviceId(String device_id) {
         if (! myPref.contains(DEVICE_ID)) {     // if the pref data base is fresh
             Log.d("GlobalPref", "it is a new global preference");
             if (device_id.equals(""))
                 setField(DEVICE_ID, genName(DEVICE_ID_LENGTH));
             else setField(DEVICE_ID, device_id);
-            // init the other fields
-            resetValueFields();
         }
     }
-    public static void resetValueFields() {
-        setField(UPLOADED_INDEX[1], 0);
-        setField(TRAINED_INDEX[1], 0);
-        setField(UPLOADED_INDEX[2], 0);
-        setField(TRAINED_INDEX[2], 0);
+    public static boolean ifFreshThenInit() {
+        if (!myPref.contains(DEVICE_ID)) {
+            setField(UPLOADED_INDEX[1], 0);
+            setField(TRAINED_INDEX[1], 0);
+            setField(UPLOADED_INDEX[2], 0);
+            setField(TRAINED_INDEX[2], 0);
+            setField(QUICK_TRAIN_ENABLE, 0);
+        }
+        if (!myPref.contains(UPLOADED_INDEX[1]))
+            setField(UPLOADED_INDEX[1], 0);
+        if (!myPref.contains(UPLOADED_INDEX[2]))
+            setField(UPLOADED_INDEX[2], 0);
+        if (!myPref.contains(TRAINED_INDEX[1]))
+            setField(TRAINED_INDEX[1], 0);
+        if (!myPref.contains(TRAINED_INDEX[2]))
+            setField(TRAINED_INDEX[2], 0);
+        if (!myPref.contains(QUICK_TRAIN_ENABLE))
+            setField(QUICK_TRAIN_ENABLE, 0);
+        return !myPref.contains(DEVICE_ID);
     }
     public static String getName() {
         return getFieldString(DEVICE_ID);

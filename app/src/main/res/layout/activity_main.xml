@@ -6,6 +6,20 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <Switch
+        android:id="@+id/QuickTrain"
+        android:layout_width="0dp"
+        android:layout_height="29dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="16dp"
+        android:onClick="toggleQuickTrain"
+        android:text="Enable Quick Training"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="@+id/textView4"
+        app:layout_constraintTop_toBottomOf="@+id/textView6"
+        tools:ignore="UseSwitchCompatOrMaterialXml" />
+
     <TextView
         android:id="@+id/TaskAndVer2"
         android:layout_width="wrap_content"
@@ -113,7 +127,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:text="External Board States"
         android:textColor="#000000"
         android:textSize="14sp"
@@ -135,7 +149,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:text="Federated Learning States"
         android:textColor="#000000"
         android:textSize="14sp"
@@ -147,7 +161,7 @@
         android:id="@+id/divider3"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:background="?android:attr/listDivider"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -167,7 +181,7 @@
         android:id="@+id/divider4"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:background="?android:attr/listDivider"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
@@ -179,7 +193,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:text="Local Dataset "
         android:textColor="#000000"
         android:textSize="14sp"
@@ -234,14 +248,14 @@
 
         <RadioButton
             android:id="@+id/RB_board_disc"
-            android:layout_width="30dp"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:buttonTint="@color/gray"
             android:clickable="false"
             android:scaleX="0.8"
             android:scaleY="0.8"
-            android:text="disconnect"
+            android:text="disc"
             android:textSize="14sp" />
 
         <RadioButton
@@ -259,12 +273,13 @@
             android:id="@+id/RB_board_idle"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_weight="1.4"
             android:buttonTint="@color/gray"
             android:clickable="false"
             android:scaleX="0.8"
             android:scaleY="0.8"
-            android:text="idle" />
+            android:text="loafing"
+            android:textAlignment="viewStart" />
 
     </RadioGroup>
 
@@ -293,21 +308,32 @@
         android:id="@+id/textView17"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:text="Local ML"
         android:textColor="#000000"
         app:layout_constraintStart_toStartOf="@+id/textView7"
-        app:layout_constraintTop_toBottomOf="@+id/textView6" />
+        app:layout_constraintTop_toBottomOf="@+id/QuickTrain" />
 
     <RadioGroup
         android:id="@+id/FLStateGroup"
         android:layout_width="300dp"
         android:layout_height="33dp"
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="-2dp"
         android:checkedButton="@+id/RB_ML_idle"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="@+id/serialStateGroup"
-        app:layout_constraintTop_toBottomOf="@+id/textView6">
+        app:layout_constraintTop_toBottomOf="@+id/QuickTrain">
+
+        <RadioButton
+            android:id="@+id/RB_ML_idle"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:buttonTint="@color/gray"
+            android:clickable="false"
+            android:scaleX="0.8"
+            android:scaleY="0.8"
+            android:text="inactive" />
 
         <RadioButton
             android:id="@+id/RB_ML_train"
@@ -323,25 +349,14 @@
 
         <RadioButton
             android:id="@+id/RB_ML_comm"
-            android:layout_width="50dp"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_weight="1.4"
             android:buttonTint="@color/gray"
             android:clickable="false"
             android:scaleX="0.8"
             android:scaleY="0.8"
             android:text="communicate" />
-
-        <RadioButton
-            android:id="@+id/RB_ML_idle"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:buttonTint="@color/gray"
-            android:clickable="false"
-            android:scaleX="0.8"
-            android:scaleY="0.8"
-            android:text="idle" />
 
 
     </RadioGroup>

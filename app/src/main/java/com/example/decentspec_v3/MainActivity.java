@@ -19,7 +19,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.telephony.gsm.GsmCellLocation;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
@@ -57,10 +56,12 @@ public class MainActivity extends AppCompatActivity {
     private Switch serial_switch;
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private Switch FL_switch;
+    private Switch quick_train;
 
     private RecyclerView myDBRV;
     private RecyclerViewAdapter myDBRVAdapter;
 
+    @SuppressLint("DefaultLocale")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
         if (Config.ALWAYS_ON)
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         GlobalPrefMgr.init(this);
-        if (GlobalPrefMgr.getName() == null)
+        if (GlobalPrefMgr.ifFreshThenInit())
             usrInputDeviceId();
         else {
             //display id
@@ -79,13 +80,26 @@ public class MainActivity extends AppCompatActivity {
 
         serial_switch = findViewById(R.id.serial_switch);
         FL_switch = findViewById(R.id.FL_switch);
+        quick_train = findViewById(R.id.QuickTrain);
 
         // initial states read and resource binding
         // get the states of two service and show
         serial_switch.setChecked(ifMyServiceRunning(SerialListenerService.class));
         FL_switch.setChecked(ifMyServiceRunning(FLManagerService.class));
+        quick_train.setChecked(GlobalPrefMgr.getFieldInt(GlobalPrefMgr.QUICK_TRAIN_ENABLE) == 1);
+
         switchRadioFL(FLManagerService.getState());
         switchRadioSerial(SerialListenerService.getState());
+
+        TextView up_sup1, up_sup2;
+        up_sup1 = findViewById(R.id.up_sup_1);
+        up_sup1.setText(String.format("%d/%d",
+                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.UPLOADED_INDEX[1]),
+                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.TRAINED_INDEX[1])));
+        up_sup2 = findViewById(R.id.up_sup_2);
+        up_sup2.setText(String.format("%d/%d",
+                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.UPLOADED_INDEX[2]),
+                    GlobalPrefMgr.getFieldInt(GlobalPrefMgr.TRAINED_INDEX[2])));
 
         myDBRV = findViewById(R.id.rv_database);
 
@@ -219,6 +233,17 @@ public class MainActivity extends AppCompatActivity {
         FLRadio.check(radioId);
     }
 
+    public void toggleQuickTrain(View view) {
+        int curVal = GlobalPrefMgr.getFieldInt(GlobalPrefMgr.QUICK_TRAIN_ENABLE);
+        if (curVal == 0) {
+            quick_train.setChecked(true);
+            GlobalPrefMgr.setField(GlobalPrefMgr.QUICK_TRAIN_ENABLE, 1);
+        } else {
+            quick_train.setChecked(false);
+            GlobalPrefMgr.setField(GlobalPrefMgr.QUICK_TRAIN_ENABLE, 0);
+        }
+    }
+
 
     // switch actions
     public void toggleSerialService(View view) {
@@ -275,7 +300,7 @@ public class MainActivity extends AppCompatActivity {
         showDialog("A compatible spectrum sensing board is expected to connect to this device, with which data used to fuel local training will be gathered.\nThe Serial Listener will stay in background and package each sampling into files.");
     }
     public void onPressHelpFL(View view) {
-        showDialog("Local training starts only when the device is connected to WiFi network with power cable plugged, considering its power consuming.\nAfter that, the trained local model will be upload to miner network.");
+        showDialog("Local training starts only when the device is connected to WiFi network with power cable plugged, considering its power consuming.\nAfter that, the trained local model will be upload to miner network. \nQuick training only train the latest 5k samples.");
     }
     public void onPressHelpData(View view) {
         showDialog("You could view records of your local sampled datasets here.\nFile name is defined by center frequency and bandwidth. You could check the number of sampled data in each file below.");
@@ -301,7 +326,7 @@ public class MainActivity extends AppCompatActivity {
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                GlobalPrefMgr.initFields(input.getText().toString());
+                GlobalPrefMgr.initDeviceId(input.getText().toString());
                 TextView device_id = findViewById(R.id.device_id);
                 device_id.setText("id: " + GlobalPrefMgr.getName());
             }
@@ -309,7 +334,7 @@ public class MainActivity extends AppCompatActivity {
         builder.setNegativeButton("Random", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                GlobalPrefMgr.initFields("");
+                GlobalPrefMgr.initDeviceId("");
                 TextView device_id = findViewById(R.id.device_id);
                 device_id.setText("id: " + GlobalPrefMgr.getName());
                 dialog.cancel();

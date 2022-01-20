@@ -3,6 +3,7 @@ package com.example.decentspec_v3.federated_learning;
 import android.content.Context;
 import android.util.Log;
 
+import com.example.decentspec_v3.GlobalPrefMgr;
 import com.example.decentspec_v3.MyUtils;
 import com.example.decentspec_v3.R;
 import com.example.decentspec_v3.database.FileDatabase;
@@ -63,7 +64,7 @@ public class FileAccessor {
     }
 
     private boolean quickTraining() {
-        return LIMIT_TRAIN_SIZE;
+        return GlobalPrefMgr.getFieldInt(GlobalPrefMgr.QUICK_TRAIN_ENABLE) == 1;
     }
 
     private Pair<double[], double[]> tvPreprocess(double[] doubleList, TrainingPara tp) {
