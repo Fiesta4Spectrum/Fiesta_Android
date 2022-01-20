@@ -222,7 +222,7 @@
 
     <RadioGroup
         android:id="@+id/serialStateGroup"
-        android:layout_width="370dp"
+        android:layout_width="300dp"
         android:layout_height="34dp"
         android:layout_marginTop="2dp"
         android:layout_marginEnd="6dp"
@@ -245,19 +245,8 @@
             android:textSize="14sp" />
 
         <RadioButton
-            android:id="@+id/RB_board_hand"
-            android:layout_width="30dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:buttonTint="@color/gray"
-            android:clickable="false"
-            android:scaleX="0.8"
-            android:scaleY="0.8"
-            android:text="handshake" />
-
-        <RadioButton
             android:id="@+id/RB_board_sample"
-            android:layout_width="7dp"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:buttonTint="@color/gray"
@@ -322,7 +311,7 @@
 
         <RadioButton
             android:id="@+id/RB_ML_train"
-            android:layout_width="10dp"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:buttonTint="@color/gray"

@@ -54,12 +54,16 @@ public class FileAccessor {
             e.printStackTrace();
         }
         // use a smaller training set
-        if (trainList.size() > MAX_LOCAL_SET_SIZE)
-            trainList = trainList.subList(0, MAX_LOCAL_SET_SIZE);
+        if (quickTraining() && trainList.size() > MAX_LOCAL_SET_SIZE)
+            trainList = trainList.subList(trainList.size() - MAX_LOCAL_SET_SIZE, MAX_LOCAL_SET_SIZE);
 
         tp.DATASET_SIZE = trainList.size();
         tp.DATASET_NAME = fileName;
         return trainList;
+    }
+
+    private boolean quickTraining() {
+        return LIMIT_TRAIN_SIZE;
     }
 
     private Pair<double[], double[]> tvPreprocess(double[] doubleList, TrainingPara tp) {

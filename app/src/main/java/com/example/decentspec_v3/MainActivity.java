@@ -200,8 +200,9 @@ public class MainActivity extends AppCompatActivity {
         int radioId = findViewById(R.id.RB_board_disc).getId();
         switch (state) {
             case SERIAL_DISC: radioId = findViewById(R.id.RB_board_disc).getId(); break;
-            case SERIAL_HANDSHAKE: radioId = findViewById(R.id.RB_board_hand).getId(); break;
-            case SERIAL_SAMPLING: radioId = findViewById(R.id.RB_board_sample).getId(); break;
+            case SERIAL_HANDSHAKE:
+            case SERIAL_SAMPLING:
+                radioId = findViewById(R.id.RB_board_sample).getId(); break;
             case SERIAL_IDLE: radioId = findViewById(R.id.RB_board_idle).getId(); break;
         }
         RadioGroup serialRadio = findViewById(R.id.serialStateGroup);

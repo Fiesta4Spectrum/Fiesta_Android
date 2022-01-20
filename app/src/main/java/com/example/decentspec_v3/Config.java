@@ -13,7 +13,8 @@ public class Config {
 
     // ML related
     public static final int ML_TASK_INTERVAL = 1000; // check the condition per 5s
-    public static final int MAX_LOCAL_SET_SIZE = 4000; // too large the size will lead to too long time training
+    public static final boolean LIMIT_TRAIN_SIZE = true;
+    public static final int MAX_LOCAL_SET_SIZE = 5000; // too large the size will lead to too long time training
     public static final boolean USE_DUMMY_DATASET = false; // use local GPS_power.dat
     public static final int MAX_PROGRESS_BAR = 5;
     public static final boolean ENABLE_GC_FREQ_LIMIT = true;
