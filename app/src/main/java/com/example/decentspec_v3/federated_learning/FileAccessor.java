@@ -56,7 +56,7 @@ public class FileAccessor {
         }
         // use a smaller training set
         if (quickTraining() && trainList.size() > MAX_LOCAL_SET_SIZE)
-            trainList = trainList.subList(trainList.size() - MAX_LOCAL_SET_SIZE, MAX_LOCAL_SET_SIZE);
+            trainList = trainList.subList(trainList.size() - MAX_LOCAL_SET_SIZE, trainList.size());
 
         tp.DATASET_SIZE = trainList.size();
         tp.DATASET_NAME = fileName;
@@ -171,10 +171,10 @@ public class FileAccessor {
     }
 
     private String array2string(double[] arr) {
-        String ret = "";
-        for (int i = 0; i<arr.length; i++) {
-            ret = ret + arr[i] + " ";
+        StringBuilder ret = new StringBuilder();
+        for (double v : arr) {
+            ret.append(v).append(" ");
         }
-        return ret;
+        return ret.toString();
     }
 }
