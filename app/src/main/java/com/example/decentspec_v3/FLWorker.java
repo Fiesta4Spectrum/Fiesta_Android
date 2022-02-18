@@ -75,11 +75,23 @@ public class FLWorker extends Thread {
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
+                TrainingPara mTPara;
                 // REMOTE ready: new global available
-                TrainingPara mTPara = mTrigger.getNewGlobal();
+                if (mTrigger.wifiReady())
+                    updateReward();
+                else {
+                    Thread.sleep(ML_TASK_INTERVAL);
+                    continue;
+                }
+                if (mTrigger.chargerReady())
+                    mTPara = mTrigger.getNewGlobal();
+                else {
+                    Thread.sleep(ML_TASK_INTERVAL);
+                    continue;
+                }
                 // LOCAL ready: wifi, battery, and local files
                 SampleFile dataFile = mTrigger.getDataset(mTPara); // TODO change it to file list instead fo a single file
-                if (dataFile != null && mTPara != null) {
+                if (dataFile != null) {
                     /* use this file to make a local train */
                     oneLocalTraining(dataFile, mTPara);
                     // end of one time training
@@ -179,7 +191,6 @@ public class FLWorker extends Thread {
         }
         // end of ML cycle =================================================================
         updateNumbers();
-        updateReward();
         cleanup();
     }
 

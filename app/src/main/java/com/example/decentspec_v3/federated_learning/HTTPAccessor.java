@@ -81,7 +81,7 @@ public class HTTPAccessor {
                 });
         HTTPQueue.add(stringRequest);
         join();
-        return tp.MINER_LIST.size() != 0;
+        return responded;
     }
 
     public double fetchReward(String myId) {

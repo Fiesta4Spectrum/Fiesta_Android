@@ -47,14 +47,14 @@ public class MyUtils {
         int bandwidth = SAMPLE_PARA_BD[configIndex];
         return String.format("%s\n\r1\n\r%d\n\r%d\n\r%d\n\r%s\n\r", SAMPLE_START_SIGNAL, center_freq, bandwidth, SAMPLE_RATE_INTERVAL, SAMPLE_END_SIGNAL);
     }
-    public static double[] powerMerge(double[] small_bins, int merge_per_bins) {
-        if (merge_per_bins == 0)
+    public static double[] powerMerge(double[] small_bins, double bins_per_merge) {
+        if (bins_per_merge == 0)
             return null;
         int len = small_bins.length;
-        double[] merged_bins = new double[len / merge_per_bins];
-        for (int i = 0; i < len; i = i + merge_per_bins) {
-            if ((len - i) >= merge_per_bins) {
-                merged_bins[i / merge_per_bins] = merge(Arrays.copyOfRange(small_bins, i, i + merge_per_bins));
+        double[] merged_bins = new double[(int)(len / bins_per_merge)];
+        for (double i = 0; i < len; i = i + bins_per_merge) {
+            if ((len - (int)i) >= (int)bins_per_merge) {
+                merged_bins[(int)(i / bins_per_merge)] = merge(Arrays.copyOfRange(small_bins, (int) Math.round(i), (int) Math.round(i + bins_per_merge)));
             }
         }
         return merged_bins;

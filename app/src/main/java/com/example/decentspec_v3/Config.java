@@ -12,7 +12,7 @@ public class Config {
     public static final int BAUD_RATE = 115200;
 
     // ML related
-    public static final int ML_TASK_INTERVAL = 1000; // check the condition per 5s
+    public static final int ML_TASK_INTERVAL = 5000; // check the condition per 5s
     public static final boolean LIMIT_TRAIN_SIZE = true;
     public static final int MAX_LOCAL_SET_SIZE = 5000; // too large the size will lead to too long time training
     public static final boolean USE_DUMMY_DATASET = false; // use local GPS_power.dat

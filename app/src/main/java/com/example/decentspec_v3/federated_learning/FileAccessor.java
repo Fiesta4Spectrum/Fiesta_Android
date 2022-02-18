@@ -97,8 +97,8 @@ public class FileAccessor {
         inList = Arrays.copyOfRange(doubleList, 0, 2);
         if (inList[0] == 0.0 || inList[1] == 0.0)
             return null;
-        double[] outListResource = Arrays.copyOfRange(doubleList, 3, 30 * 8 + 3);
-        outList = MyUtils.powerMerge(outListResource, 30);
+        double[] outListResource = Arrays.copyOfRange(doubleList, 3, 256 + 3);
+        outList = MyUtils.powerMerge(outListResource, 30.72);
         return standardize(inList, outList, tp);
     }
     private Pair<double[], double[]> ltePreprocess(double[] doubleList, TrainingPara tp) {
