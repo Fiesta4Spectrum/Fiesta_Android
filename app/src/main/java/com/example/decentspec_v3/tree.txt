@@ -1,0 +1,19 @@
+├── Config.java                     - just the config
+├── FLManagerService.java           - background servive manage 2 federated learning threads
+├── FLWorker.java                   - the actual thread perform fl training
+├── GPSTracker.java                 - get GPS location
+├── GlobalPrefMgr.java              - manage device preference
+├── IntentDirectory.java            - a string to INTENT mapping
+├── MainActivity.java               - main UI
+├── MyUtils.java                    - helper funcs
+├── RecyclerViewAdapter.java        - show the list of local database
+├── SerialListenerService.java      - background service listening serial data
+├── SettingsActivity.java           - setting UI, not acutally implemented, you can ignore it
+├── USBBroadcastReceiver.java       - monitor whenever a cable is connected to your Android USB port
+├── database                        - local dataset database
+└── federated_learning              - Implement federated learning training with dl4j framework on android
+    ├── FileAccessor.java           - read local training set
+    ├── HTTPAccessor.java           - http get/post requests
+    ├── HelperMethods.java          - helper funcs
+    ├── ScoreListener.java          - print score after each iteration
+    └── TrainingPara.java           - construct a FNN model with some parameters
