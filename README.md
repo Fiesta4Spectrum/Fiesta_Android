@@ -1,4 +1,4 @@
-## Android Client for Fiesta Project
+## Android Client for Fiesta Project: DecentSpec
 
 #### A video demo:
 
